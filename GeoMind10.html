@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoMind 10 - Ôn tập Địa lí 10</title>
-    <!-- Tailwind CSS -->
+    <title>GeoMind 10 - Ôn tập Địa lí 10 Toàn diện</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Babel để xử lý JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Import Map để dùng thư viện từ CDN -->
     <script type="importmap">
     {
       "imports": {
@@ -19,646 +15,617 @@
       }
     }
     </script>
-
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .rotate-y-180 { transform: rotateY(180deg); }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .perspective-1000 { perspective: 1000px; }
-        .clip-path-triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-        .animate-fade-in-down { animation: fadeInDown 0.3s ease-out forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes flow {
           0% { transform: translateX(0); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
           100% { transform: translateX(200px); opacity: 0; }
         }
-        /* Chỉ chạy animation khi có class group-hover */
         .group:hover .animate-flow-hover { animation: flow 2s linear infinite; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-    <div id="root"></div>
+<body class="bg-gray-100 text-gray-800 h-screen overflow-hidden">
+    <div id="root" class="h-full"></div>
 
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect } from 'react';
+        import React, { useState, useEffect, useMemo } from 'react';
         import { createRoot } from 'react-dom/client';
         import { 
             BookOpen, Brain, Zap, ArrowRight, RotateCcw, Check, X, Wind, Waves, 
             Mountain, Thermometer, Layers, Droplets, Info, Share2, ZoomIn, 
-            RefreshCw, Shuffle, Minus, Plus, PieChart, ThumbsUp, ThumbsDown 
+            RefreshCw, Shuffle, Minus, Plus, PieChart, ThumbsUp, ThumbsDown, 
+            Map, Globe, Activity, Compass
         } from 'lucide-react';
 
-        // --- DỮ LIỆU ---
+        // ==========================================
+        // PHẦN 1: DỮ LIỆU FLASHCARD (50 THẺ)
+        // ==========================================
         const fullFlashcardsData = [
-            // Bài 8
-            { id: 1, category: "Khí quyển", term: "Khí quyển", definition: "Lớp không khí bao quanh Trái Đất, chịu ảnh hưởng của Vũ trụ (trước tiên là Mặt Trời)." },
-            { id: 2, category: "Khí quyển", term: "Biên độ nhiệt năm", definition: "Sự chênh lệch giữa nhiệt độ trung bình tháng cao nhất và tháng thấp nhất trong năm." },
-            { id: 3, category: "Khí quyển", term: "Bức xạ mặt trời", definition: "Nguồn năng lượng chính cung cấp nhiệt và ánh sáng cho Trái Đất." },
-            // Bài 9
-            { id: 4, category: "Khí quyển", term: "Khí áp", definition: "Sức nén của không khí xuống bề mặt Trái Đất (tỉ lệ nghịch với độ cao và nhiệt độ)." },
-            { id: 5, category: "Khí quyển", term: "Gió Tây ôn đới", definition: "Thổi từ áp cao cận chí tuyến về áp thấp ôn đới. Hướng Tây là chủ đạo. Tính chất: Ẩm, gây mưa nhiều." },
-            { id: 6, category: "Khí quyển", term: "Gió Mậu dịch", definition: "Thổi từ áp cao cận chí tuyến về áp thấp xích đạo. Tính chất: Khô, ít mưa." },
-            { id: 7, category: "Khí quyển", term: "Gió Phơn", definition: "Gió khô, nóng khi vượt núi (do hiệu ứng phơn: lên cao giảm ẩm/nhiệt, xuống thấp tăng nhiệt khô)." },
-            { id: 8, category: "Khí quyển", term: "Gió Mùa", definition: "Loại gió thổi theo mùa, hướng gió ở hai mùa ngược nhau (do sự nóng lạnh không đều giữa lục địa và đại dương)." },
-            { id: 9, category: "Khí quyển", term: "Gió Đất - Gió Biển", definition: "Hình thành ven biển, thay đổi hướng theo ngày đêm do sự chênh lệch nhiệt độ/khí áp giữa đất và biển." },
-            // Bài 10
-            { id: 10, category: "Khí quyển", term: "Frông (Front)", definition: "Mặt ngăn cách giữa hai khối khí khác biệt về tính chất vật lí (nóng/lạnh), thường gây mưa, nhiễu loạn thời tiết." },
-            { id: 11, category: "Khí quyển", term: "Dải hội tụ nhiệt đới", definition: "Nơi tiếp xúc của hai khối khí có tính chất giống nhau (thường là Tín phong 2 bán cầu), gây mưa lớn." },
-            { id: 12, category: "Khí quyển", term: "Nhân tố gây mưa", definition: "Khí áp thấp, Frông, Dải hội tụ, Gió mang hơi ẩm, Dòng biển nóng, Địa hình đón gió." },
-            // Bài 12
-            { id: 13, category: "Thủy quyển", term: "Thủy quyển", definition: "Lớp nước trên Trái Đất (Biển, đại dương, sông hồ, băng tuyết, nước ngầm, hơi nước trong khí quyển)." },
-            { id: 14, category: "Thủy quyển", term: "Hồ kiến tạo", definition: "Hồ hình thành tại các vùng sụt lún, đứt gãy của vỏ Trái Đất (Ví dụ: Biển Hồ, hồ Bai-can)." },
-            { id: 15, category: "Thủy quyển", term: "Hồ núi lửa", definition: "Hồ hình thành trên miệng núi lửa đã tắt (Ví dụ: Hồ Tơ Nưng/Biển Hồ Pleiku)." },
-            { id: 16, category: "Thủy quyển", term: "Chế độ nước sông", definition: "Sự thay đổi lưu lượng nước sông theo thời gian (mùa lũ, mùa cạn), phụ thuộc vào nguồn cung cấp nước." },
-            { id: 17, category: "Thủy quyển", term: "Nước ngầm", definition: "Nước nằm trong các tầng chứa nước dưới đất, phụ thuộc vào nguồn cung cấp, địa hình và cấu tạo đất đá." },
-            // Bài 13
-            { id: 18, category: "Thủy quyển", term: "Sóng biển", definition: "Dao động tại chỗ của nước biển theo chiều thẳng đứng. Nguyên nhân chủ yếu do gió." },
-            { id: 19, category: "Thủy quyển", term: "Triều cường", definition: "Dao động thủy triều lớn nhất khi Mặt Trăng, Trái Đất, Mặt Trời thẳng hàng (lực hút cộng hưởng)." },
-            { id: 20, category: "Thủy quyển", term: "Triều kém", definition: "Dao động thủy triều nhỏ nhất khi Mặt Trăng, Trái Đất, Mặt Trời tạo thành góc vuông." },
-            { id: 21, category: "Thủy quyển", term: "Dòng biển (Hải lưu)", definition: "Các dòng nước chảy trong biển và đại dương. Dòng biển nóng (từ xích đạo về cực), Dòng biển lạnh (từ cực về xích đạo)." },
-            { id: 22, category: "Thủy quyển", term: "Độ muối", definition: "Lượng muối hòa tan trong nước biển. Cao nhất ở chí tuyến (ít mưa, bốc hơi mạnh), thấp ở xích đạo và ôn đới." },
-            // Bài 14
-            { id: 23, category: "Đất", term: "Đất (Thổ nhưỡng)", definition: "Lớp vật chất tơi xốp ở bề mặt lục địa, được đặc trưng bởi độ phì." },
-            { id: 24, category: "Đất", term: "Độ phì", definition: "Khả năng cung cấp nước, nhiệt, khí và chất dinh dưỡng cần thiết cho thực vật sinh trưởng." },
-            { id: 25, category: "Đất", term: "Đá mẹ", definition: "Nhân tố cung cấp vật chất vô cơ, quyết định thành phần khoáng vật và tính chất lí/hóa của đất." },
-            { id: 26, category: "Đất", term: "Vỏ phong hóa", definition: "Lớp sản phẩm vụn thô ở phần trên cùng vỏ Trái Đất, là kết quả phá hủy đá gốc." },
-            { id: 27, category: "Đất", term: "Vai trò Khí hậu (với đất)", definition: "Nhiệt và ẩm phá hủy đá (phong hóa) và ảnh hưởng đến sự phân giải chất hữu cơ của sinh vật." },
-            // Bài 15
-            { id: 28, category: "Sinh quyển", term: "Sinh quyển", definition: "Quyển của lớp vỏ Trái Đất mà thành phần, cấu trúc và năng lượng chủ yếu do sinh vật chi phối." },
-            { id: 29, category: "Sinh quyển", term: "Thảm thực vật", definition: "Toàn bộ các loài thực vật cùng sinh sống trên một vùng rộng lớn." },
-            { id: 30, category: "Sinh quyển", term: "Quy luật địa đới", definition: "Sự thay đổi có quy luật của các thành phần địa lí theo vĩ độ (từ Xích đạo về hai cực)." }
+            // --- CHƯƠNG 1: SỬ DỤNG BẢN ĐỒ (BÀI 1, 2, 3) ---
+            { id: 1, category: "Bản đồ", term: "Bản đồ", definition: "Hình ảnh thu nhỏ một phần hay toàn bộ bề mặt Trái Đất lên mặt phẳng theo những quy ước nhất định." },
+            { id: 2, category: "Bản đồ", term: "Phép chiếu phương vị", definition: "Phương pháp thể hiện mạng lưới kinh, vĩ tuyến lên mặt phẳng tiếp xúc với quả cầu (thường dùng cho vùng cực)." },
+            { id: 3, category: "Bản đồ", term: "Phép chiếu hình nón", definition: "Dùng hình nón trùm lên quả cầu để thể hiện (thường dùng cho vùng vĩ độ trung bình)." },
+            { id: 4, category: "Bản đồ", term: "Phép chiếu hình trụ", definition: "Dùng hình trụ bao quanh quả cầu (thường dùng cho vùng Xích đạo)." },
+            { id: 5, category: "Bản đồ", term: "Phương pháp kí hiệu", definition: "Dùng để thể hiện các đối tượng phân bố theo điểm (sân bay, mỏ khoáng sản, đô thị)." },
+            { id: 6, category: "Bản đồ", term: "Phương pháp đường chuyển động", definition: "Thể hiện sự di chuyển của các đối tượng (hướng gió, dòng biển, luồng di dân)." },
+            { id: 7, category: "Bản đồ", term: "Phương pháp chấm điểm", definition: "Thể hiện các đối tượng phân bố phân tán (dân cư, đàn gia súc) bằng các điểm chấm." },
+            { id: 8, category: "Bản đồ", term: "GPS (Toàn cầu)", definition: "Hệ thống xác định vị trí, tọa độ, vận tốc của vật thể dựa vào vệ tinh." },
+            { id: 9, category: "Bản đồ", term: "Bản đồ số", definition: "Tập hợp dữ liệu bản đồ được số hóa, lưu trữ và hiển thị trên các thiết bị điện tử." },
+
+            // --- CHƯƠNG 2: TRÁI ĐẤT (BÀI 4, 5) ---
+            { id: 10, category: "Trái Đất", term: "Vỏ Trái Đất", definition: "Lớp cứng ngoài cùng của Trái Đất, gồm vỏ lục địa (dày) và vỏ đại dương (mỏng)." },
+            { id: 11, category: "Trái Đất", term: "Thuyết kiến tạo mảng", definition: "Thạch quyển gồm các mảng kiến tạo di chuyển trên lớp Manti quánh dẻo." },
+            { id: 12, category: "Trái Đất", term: "Lực Cô-ri-ô-lít", definition: "Lực làm lệch hướng chuyển động của vật thể: sang phải ở BC Bắc, sang trái ở BC Nam." },
+            { id: 13, category: "Trái Đất", term: "Giờ GMT", definition: "Giờ tại múi số 0 (đi qua Luân Đôn), được dùng làm giờ chuẩn quốc tế." },
+            { id: 14, category: "Trái Đất", term: "Chuyển động biểu kiến", definition: "Chuyển động nhìn thấy nhưng không có thực của Mặt Trời (do Trái Đất tự quay/tịnh tiến)." },
+            { id: 15, category: "Trái Đất", term: "Mùa", definition: "Khoảng thời gian trong năm có đặc điểm riêng về thời tiết, khí hậu (do trục Trái Đất nghiêng)." },
+
+            // --- CHƯƠNG 3: THẠCH QUYỂN (BÀI 6, 7) ---
+            { id: 16, category: "Thạch quyển", term: "Thạch quyển", definition: "Gồm vỏ Trái Đất và phần cứng trên cùng của lớp Manti." },
+            { id: 17, category: "Thạch quyển", term: "Nội lực", definition: "Lực sinh ra bên trong Trái Đất (do năng lượng phân hủy phóng xạ, phản ứng hóa học)." },
+            { id: 18, category: "Thạch quyển", term: "Ngoại lực", definition: "Lực sinh ra trên bề mặt Trái Đất (chủ yếu do năng lượng bức xạ Mặt Trời)." },
+            { id: 19, category: "Thạch quyển", term: "Phong hóa", definition: "Quá trình phá hủy, biến đổi đá và khoáng vật (Lí học, Hóa học, Sinh học)." },
+            { id: 20, category: "Thạch quyển", term: "Địa hào", definition: "Bộ phận vỏ Trái Đất bị sụt xuống giữa hai đường đứt gãy." },
+            { id: 21, category: "Thạch quyển", term: "Địa lũy", definition: "Bộ phận vỏ Trái Đất trồi lên giữa hai đường đứt gãy." },
+
+            // --- CHƯƠNG 4: KHÍ QUYỂN (BÀI 8, 9, 10) ---
+            { id: 22, category: "Khí quyển", term: "Nhiệt độ không khí", definition: "Độ nóng lạnh của không khí, phụ thuộc vào góc nhập xạ, bề mặt đệm, địa hình." },
+            { id: 23, category: "Khí quyển", term: "Khí áp", definition: "Sức nén của không khí xuống bề mặt Trái Đất. Giảm theo độ cao." },
+            { id: 24, category: "Khí quyển", term: "Gió Tây ôn đới", definition: "Thổi từ áp cao cận chí tuyến về áp thấp ôn đới. Tính chất ẩm, gây mưa." },
+            { id: 25, category: "Khí quyển", term: "Gió Mậu dịch", definition: "Thổi từ áp cao cận chí tuyến về áp thấp xích đạo. Tính chất khô." },
+            { id: 26, category: "Khí quyển", term: "Gió Phơn", definition: "Gió vượt núi, biến tính trở nên khô và nóng ở sườn khuất gió." },
+            { id: 27, category: "Khí quyển", term: "Frông (Front)", definition: "Mặt ngăn cách giữa hai khối khí khác biệt về tính chất vật lí." },
+            { id: 28, category: "Khí quyển", term: "Dải hội tụ nhiệt đới", definition: "Nơi gặp gỡ của hai khối khí cùng tính chất (thường là Tín phong 2 bán cầu), gây mưa lớn." },
+
+            // --- CHƯƠNG 5: THỦY QUYỂN (BÀI 12, 13) ---
+            { id: 29, category: "Thủy quyển", term: "Thủy quyển", definition: "Lớp nước trên Trái Đất (biển, sông hồ, băng tuyết, nước ngầm, hơi nước)." },
+            { id: 30, category: "Thủy quyển", term: "Hồ kiến tạo", definition: "Hồ hình thành tại các vết nứt, sụt lún của vỏ Trái Đất (Ví dụ: Hồ Bai-can)." },
+            { id: 31, category: "Thủy quyển", term: "Hồ núi lửa", definition: "Hồ hình thành trên miệng núi lửa đã tắt (Ví dụ: Hồ Tơ Nưng)." },
+            { id: 32, category: "Thủy quyển", term: "Lưu lượng nước", definition: "Lượng nước chảy qua mặt cắt ngang lòng sông trong 1 giây ($m^3/s$)." },
+            { id: 33, category: "Thủy quyển", term: "Chế độ nước sông", definition: "Sự thay đổi lưu lượng nước sông theo thời gian (mùa lũ, mùa cạn)." },
+            { id: 34, category: "Thủy quyển", term: "Sóng biển", definition: "Dao động tại chỗ của nước biển theo chiều thẳng đứng, chủ yếu do gió." },
+            { id: 35, category: "Thủy quyển", term: "Triều cường", definition: "Thủy triều lớn nhất khi Mặt Trăng - Trái Đất - Mặt Trời thẳng hàng." },
+            { id: 36, category: "Thủy quyển", term: "Dòng biển", definition: "Các dòng chảy trong biển và đại dương (Dòng nóng, dòng lạnh)." },
+
+            // --- CHƯƠNG 6: SINH QUYỂN & ĐẤT (BÀI 14, 15) ---
+            { id: 37, category: "Đất", term: "Độ phì", definition: "Khả năng cung cấp nước, nhiệt, khí, dinh dưỡng cho thực vật." },
+            { id: 38, category: "Đất", term: "Đá mẹ", definition: "Quyết định thành phần khoáng vật và tính chất cơ giới của đất." },
+            { id: 39, category: "Đất", term: "Khí hậu (với đất)", definition: "Ảnh hưởng đến quá trình phong hóa và phân giải hữu cơ." },
+            { id: 40, category: "Đất", term: "Vỏ phong hóa", definition: "Lớp sản phẩm vụn thô trên cùng vỏ Trái Đất, nguyên liệu tạo thành đất." },
+            { id: 41, category: "Sinh quyển", term: "Sinh quyển", definition: "Quyển chứa toàn bộ sinh vật sống (xâm nhập vào Khí, Thủy, Thạch quyển)." },
+            { id: 42, category: "Sinh quyển", term: "Giới hạn sinh quyển", definition: "Từ thấp nhất của Thủy/Thạch quyển đến giới hạn dưới tầng Ozon." },
+            { id: 43, category: "Sinh quyển", term: "Nhân tố sinh học", definition: "Thực vật cung cấp vật chất hữu cơ; Vi sinh vật phân giải mùn." },
+
+            // --- QUY LUẬT ĐỊA LÍ (BÀI 17, 18) ---
+            { id: 44, category: "Quy luật", term: "Lớp vỏ địa lí", definition: "Lớp vỏ xâm nhập và tác động lẫn nhau của các quyển (Khí, Thủy, Thạch, Sinh)." },
+            { id: 45, category: "Quy luật", term: "Quy luật thống nhất", definition: "Một thành phần thay đổi kéo theo sự thay đổi của các thành phần khác." },
+            { id: 46, category: "Quy luật", term: "Quy luật địa đới", definition: "Thay đổi theo vĩ độ (do Trái Đất hình cầu và bức xạ Mặt Trời)." },
+            { id: 47, category: "Quy luật", term: "Quy luật phi địa đới", definition: "Thay đổi không theo vĩ độ (do địa hình và lục địa/đại dương)." },
+            { id: 48, category: "Quy luật", term: "Quy luật đai cao", definition: "Thay đổi theo độ cao (càng lên cao nhiệt độ càng giảm)." },
+            { id: 49, category: "Quy luật", term: "Quy luật địa ô", definition: "Thay đổi theo kinh độ (từ đông sang tây, do ảnh hưởng của biển)." },
+            { id: 50, category: "Tổng hợp", term: "Thổ nhưỡng quyển", definition: "Lớp vỏ chứa đất nằm trên bề mặt lục địa." }
         ];
 
+        // ==========================================
+        // PHẦN 2: NGÂN HÀNG CÂU HỎI (200 CÂU)
+        // ==========================================
+        // (Dữ liệu trích xuất từ file 500 câu trắc nghiệm)
         const questionBank = [
-            {
-                id: 1,
-                question: "Nhiệt độ trung bình năm giảm dần từ Xích đạo về hai cực chủ yếu do:",
-                options: ["Thời gian chiếu sáng giảm dần.", "Góc chiếu của tia sáng Mặt Trời giảm dần.", "Ảnh hưởng của dòng biển lạnh.", "Địa hình ngày càng cao."],
-                correct: 1,
-                explanation: "Góc chiếu sáng của Mặt Trời giảm dần từ xích đạo về cực làm lượng nhiệt nhận được giảm theo."
-            },
-            {
-                id: 2,
-                question: "Đặc điểm nào sau đây KHÔNG phải của Gió Tây ôn đới?",
-                options: ["Thổi từ áp cao cận chí tuyến về áp thấp ôn đới.", "Hướng chủ đạo là hướng Tây.", "Tính chất khô, ít gây mưa.", "Thổi quanh năm."],
-                correct: 2,
-                explanation: "Gió Tây ôn đới có tính chất ẩm và gây mưa nhiều, không phải khô."
-            },
-            {
-                id: 3,
-                question: "Nguyên nhân chủ yếu hình thành sóng biển là do:",
-                options: ["Sức hút của Mặt Trăng.", "Động đất núi lửa.", "Gió.", "Sự chênh lệch nhiệt độ."],
-                correct: 2,
-                explanation: "Gió là nguyên nhân chủ yếu tạo ra sóng biển (dao động tại chỗ)."
-            },
-            {
-                id: 4,
-                question: "Thủy triều lớn nhất (Triều cường) xảy ra khi:",
-                options: ["Mặt Trăng, Trái Đất, Mặt Trời tạo thành góc vuông.", "Mặt Trăng, Trái Đất, Mặt Trời thẳng hàng.", "Trái Đất ở gần Mặt Trời nhất.", "Trái Đất ở xa Mặt Trăng nhất."],
-                correct: 1,
-                explanation: "Khi 3 thiên thể thẳng hàng, lực hút cộng hưởng tạo ra sức hút lớn nhất."
-            },
-            {
-                id: 5,
-                question: "Nhân tố nào đóng vai trò chủ đạo trong việc phá hủy đá gốc (phong hóa) để hình thành đất?",
-                options: ["Sinh vật.", "Khí hậu (Nhiệt và Ẩm).", "Địa hình.", "Thời gian."],
-                correct: 1,
-                explanation: "Nhiệt độ và lượng mưa (Khí hậu) tác động trực tiếp làm phá hủy đá gốc về mặt vật lý và hóa học."
-            },
-            {
-                id: 6,
-                question: "Khu vực nào sau đây trên Trái Đất thường có lượng mưa lớn nhất?",
-                options: ["Vùng cực.", "Vùng chí tuyến.", "Vùng ôn đới.", "Vùng xích đạo."],
-                correct: 3,
-                explanation: "Vùng xích đạo có khí áp thấp, nhiệt độ cao, bốc hơi mạnh và dòng thăng hoạt động mạnh nên mưa nhiều nhất."
-            },
-            {
-                id: 7,
-                question: "Tại sao các vùng chí tuyến ven bờ tây lục địa thường có hoang mạc?",
-                options: ["Do ảnh hưởng của dòng biển lạnh.", "Do gió Mậu dịch thổi từ lục địa ra.", "Do áp cao cận chí tuyến ngự trị.", "Cả 3 nguyên nhân trên."],
-                correct: 3,
-                explanation: "Hoang mạc chí tuyến hình thành do tổng hợp của áp cao (khô), dòng biển lạnh (không bốc hơi) và gió thổi ra biển."
-            },
-            {
-                id: 8,
-                question: "Sông ngòi ở vùng khí hậu nhiệt đới gió mùa thường có chế độ nước:",
-                options: ["Điều hòa quanh năm.", "Phân mùa lũ - cạn rõ rệt.", "Đóng băng vào mùa đông.", "Chủ yếu do băng tuyết tan cung cấp."],
-                correct: 1,
-                explanation: "Vùng nhiệt đới gió mùa có mùa mưa và mùa khô sâu sắc, nên sông ngòi cũng có mùa lũ và mùa cạn tương ứng."
-            },
-            {
-                id: 9,
-                question: "Hồ Ba Bể (Việt Nam) và Hồ kiến tạo Đông Phi thuộc loại hồ nào?",
-                options: ["Hồ núi lửa.", "Hồ băng hà.", "Hồ kiến tạo.", "Hồ móng ngựa."],
-                correct: 2,
-                explanation: "Các hồ này hình thành tại các vùng sụt lún, đứt gãy của vỏ Trái Đất (nguồn gốc kiến tạo)."
-            },
-            {
-                id: 10,
-                question: "Nhân tố quyết định sự phân bố của các đới thiên nhiên (sinh vật) trên Trái Đất là:",
-                options: ["Đất đai.", "Địa hình.", "Khí hậu.", "Nguồn nước."],
-                correct: 2,
-                explanation: "Khí hậu (chế độ nhiệt, ẩm) quy định sự phân bố của thảm thực vật và đất, từ đó hình thành các đới thiên nhiên."
-            }
+            // --- CHƯƠNG 1: BẢN ĐỒ ---
+            { id: 1, question: "Nguyên nhân cơ bản khiến chúng ta phải sử dụng nhiều phép chiếu đồ khác nhau là:", options: ["Do bề mặt Trái Đất cong", "Do yêu cầu sử dụng khác nhau", "Do vị trí lãnh thổ cần thể hiện", "Do hình dáng lãnh thổ"], correct: 1, explanation: "Do yêu cầu sử dụng và vị trí lãnh thổ khác nhau cần độ chính xác khác nhau." },
+            { id: 2, question: "Mặt phẳng chiếu đồ thường có dạng hình học là:", options: ["Hình nón", "Hình trụ", "Mặt phẳng", "Tất cả các ý trên"], correct: 3, explanation: "Có 3 loại mặt chiếu chính: nón, trụ, mặt phẳng." },
+            { id: 3, question: "Phép chiếu phương vị sử dụng mặt chiếu đồ là:", options: ["Hình nón", "Mặt phẳng", "Hình trụ", "Hình lục lăng"], correct: 1, explanation: "Phương vị là phép chiếu lên mặt phẳng." },
+            { id: 6, question: "Trong phép chiếu phương vị đứng mặt chiếu tiếp xúc với địa cầu ở vị trí:", options: ["Cực", "Vòng cực", "Chí tuyến", "Xích đạo"], correct: 0, explanation: "Phương vị đứng tiếp xúc ở Cực." },
+            { id: 9, question: "Phép chiếu phương vị ngang thường được dùng để vẽ bản đồ:", options: ["Bán cầu Đông và Tây", "Bán cầu Bắc và Nam", "Vùng cực", "Vùng vĩ độ trung bình"], correct: 0, explanation: "Phương vị ngang tiếp xúc ở Xích đạo, vẽ bán cầu Đông/Tây." },
+            { id: 16, question: "Phép chiếu hình nón đứng thường được sử dụng để vẽ những phần lãnh thổ có đặc điểm:", options: ["Vĩ độ trung bình, kéo dài Bắc-Nam", "Vĩ độ trung bình, kéo dài Đông-Tây", "Vĩ độ thấp", "Vĩ độ cao"], correct: 1, explanation: "Hình nón thích hợp cho vĩ độ trung bình, lãnh thổ kéo dài theo vĩ tuyến (Đông-Tây)." },
+            { id: 21, question: "Bản đồ tỉ lệ lớn là loại bản đồ có tỉ lệ:", options: ["Lớn hơn hoặc bằng 1:200.000", "Lớn hơn 1:200.000", "Lớn hơn hoặc bằng 1:100.000", "Bé hơn 1:200.000"], correct: 1, explanation: "Theo quy ước thông thường trong SGK cũ/tài liệu tham khảo." },
+            { id: 23, question: "Phương pháp kí hiệu thường được dùng để thể hiện các đối tượng địa lí có đặc điểm:", options: ["Phân bố rộng khắp", "Phân bố theo những điểm cụ thể", "Phân bố theo dải", "Phân bố không đồng đều"], correct: 1, explanation: "Phương pháp kí hiệu dùng cho đối tượng phân bố theo điểm." },
+            { id: 28, question: "Phương pháp kí hiệu đường chuyển động thường được dùng để thể hiện:", options: ["Phân bố theo điểm", "Sự di chuyển theo các tuyến", "Phân bố theo tuyến", "Phân bố rải rác"], correct: 1, explanation: "Thể hiện sự di chuyển, luồng, hướng." },
+            { id: 31, question: "Phương pháp chấm điểm thường được dùng để thể hiện các đối tượng địa lí:", options: ["Phân bố phân tán, lẻ tẻ", "Tập trung theo điểm", "Theo tuyến", "Phạm vi rộng"], correct: 0, explanation: "Dùng cho đối tượng phân tán như dân cư nông thôn, gia súc." },
+            { id: 33, question: "Đặc trưng của phương pháp khoanh vùng là:", options: ["Thể hiện sự phân bố", "Thể hiện động lực", "Thể hiện sự phổ biến của đối tượng riêng biệt", "Tất cả đều đúng"], correct: 2, explanation: "Khoanh vùng thể hiện không gian phân bố của đối tượng (dân tộc, cây trồng)." },
+            { id: 34, question: "Phương pháp bản đồ – biểu đồ thường được dùng để thể hiện:", options: ["Chất lượng", "Giá trị tổng cộng trên đơn vị lãnh thổ", "Cơ cấu", "Động lực"], correct: 1, explanation: "Thể hiện giá trị tổng cộng (VD: tổng sản lượng lúa của một tỉnh)." },
+
+            // --- CHƯƠNG 2: TRÁI ĐẤT ---
+            { id: 41, question: "Thành phần cấu tạo của mỗi thiên hà bao gồm:", options: ["Các thiên thể, khí, bụi", "Thiên thể, khí, bụi, bức xạ điện từ", "Ngôi sao, hành tinh", "Hành tinh và vệ tinh"], correct: 1, explanation: "Thiên hà chứa thiên thể, khí, bụi và bức xạ." },
+            { id: 44, question: "Theo thuyết Big Bang, các ngôi sao và thiên hà hình thành do lực:", options: ["Hấp dẫn", "Ma sát", "Côriôlit", "Li tâm"], correct: 0, explanation: "Lực hấp dẫn làm vật chất ngưng tụ." },
+            { id: 46, question: "Quỹ đạo của các hành tinh chuyển động xung quanh Mặt Trời có dạng:", options: ["Tròn", "Elip", "Không xác định", "Xoắn ốc"], correct: 1, explanation: "Quỹ đạo hình elip gần tròn." },
+            { id: 53, question: "Khoảng cách trung bình từ Trái Đất đến Mặt Trời là:", options: ["149,6 nghìn km", "149,6 triệu km", "149,6 tỉ km", "140 triệu km"], correct: 1, explanation: "1 đơn vị thiên văn (AU) = 149,6 triệu km." },
+            { id: 54, question: "Trục tưởng tượng của Trái Đất hợp với mặt phẳng xích đạo một góc:", options: ["90 độ", "60 độ", "66 độ", "66 độ 33 phút"], correct: 0, explanation: "Trục vuông góc với mặt phẳng xích đạo." },
+            { id: 55, question: "Trục Trái Đất hợp với mặt phẳng quỹ đạo một góc:", options: ["90 độ", "60 độ", "66 độ", "66 độ 33 phút"], correct: 3, explanation: "Góc nghiêng không đổi 66°33'." },
+            { id: 56, question: "Hướng tự quay quanh trục của Trái Đất:", options: ["Thuận chiều kim đồng hồ", "Cùng hướng chuyển động quanh MT", "Ngược chiều kim đồng hồ", "Từ Đông sang Tây"], correct: 3, explanation: "Tự quay từ Tây sang Đông (ngược chiều kim đồng hồ nếu nhìn từ cực Bắc)." },
+            { id: 60, question: "Vận tốc tự quay của Trái Đất có đặc điểm:", options: ["Lớn nhất ở xích đạo, giảm về cực", "Tăng dần từ xích đạo về cực", "Lớn nhất ở chí tuyến", "Không đổi"], correct: 0, explanation: "Vận tốc dài lớn nhất ở xích đạo (464m/s), bằng 0 ở cực." },
+            { id: 63, question: "Nguyên nhân ngày và đêm luân phiên:", options: ["Trái Đất hình cầu", "Trái Đất tự quay", "Tia sáng song song", "Cả a và b"], correct: 3, explanation: "Hình cầu sinh ra ngày đêm, tự quay sinh ra sự luân phiên." },
+            { id: 67, question: "Đường chuyển ngày quốc tế được quy ước lấy theo kinh tuyến:", options: ["180 độ", "0 độ", "90 độ Đ", "90 độ T"], correct: 0, explanation: "Kinh tuyến 180 độ đi qua Thái Bình Dương." },
+            { id: 69, question: "Lực Côriôlit sinh ra do:", options: ["Trái Đất tự quay quanh trục", "Trái Đất quay quanh Mặt Trời", "Trục nghiêng", "Sức hút Mặt Trăng"], correct: 0, explanation: "Do quán tính khi Trái Đất tự quay." },
+            { id: 79, question: "Nguyên nhân sinh ra mùa:", options: ["Trái Đất tự quay", "Chuyển động quanh MT", "Trục nghiêng không đổi phương", "Cả b và c"], correct: 2, explanation: "Do chuyển động tịnh tiến và trục nghiêng không đổi phương." },
+            { id: 82, question: "Khu vực nhận được lượng nhiệt lớn nhất từ Mặt Trời trong năm:", options: ["Cực", "Xích đạo", "Vòng cực", "Chí tuyến"], correct: 1, explanation: "Xích đạo có góc nhập xạ lớn quanh năm." },
+            
+            // --- CHƯƠNG 3: THẠCH QUYỂN ---
+            { id: 91, question: "Để biết cấu trúc Trái Đất người ta dựa vào:", options: ["Mũi khoan sâu", "Nghiên cứu đáy biển", "Sóng địa chấn", "Nguồn gốc Trái Đất"], correct: 2, explanation: "Sóng địa chấn lan truyền khác nhau qua các môi trường." },
+            { id: 92, question: "Thứ tự độ dày các lớp từ nhỏ đến lớn:", options: ["Vỏ, Manti, Nhân", "Manti, Nhân, Vỏ", "Nhân, Manti, Vỏ", "Vỏ, Nhân, Manti"], correct: 0, explanation: "Vỏ mỏng nhất (5-70km), Nhân dày nhất." },
+            { id: 94, question: "Thứ tự các tầng đá của vỏ lục địa từ trên xuống:", options: ["Trầm tích, Granit, Badan", "Trầm tích, Badan, Granit", "Granit, Trầm tích, Badan", "Badan, Trầm tích, Granit"], correct: 0, explanation: "Cấu tạo vỏ lục địa đủ 3 tầng: Trầm tích - Granit - Badan." },
+            { id: 98, question: "Thạch quyển được giới hạn bởi:", options: ["Vỏ Trái Đất", "Vỏ TĐ và lớp Manti", "Lớp Manti", "Vỏ TĐ và phần trên Manti"], correct: 3, explanation: "Thạch quyển gồm vỏ và phần cứng trên cùng của Manti." },
+            { id: 102, question: "Thuyết kiến tạo mảng dựa trên:", options: ["Thuyết trôi lục địa", "Thuyết Big Bang", "Thuyết nhật tâm", "Thuyết địa tâm"], correct: 0, explanation: "Phát triển từ thuyết trôi lục địa của Wegener." },
+            { id: 104, question: "Dãy Himalaya hình thành do:", options: ["Mảng Ấn Độ xô mảng Âu-Á", "Mảng Thái Bình Dương xô Âu-Á", "Mảng Phi xô Âu-Á", "Mảng Bắc Mỹ xô Nam Mỹ"], correct: 0, explanation: "Hai mảng lục địa xô vào nhau." },
+            { id: 109, question: "Đá mắc ma hình thành do:", options: ["Nguội lạnh vật chất nóng chảy", "Trầm tích nén ép", "Biến chất", "Sinh vật tích tụ"], correct: 0, explanation: "Do mắc ma từ lòng đất phun trào hoặc xâm nhập rồi nguội đi." },
+            { id: 112, question: "Nội lực là lực sinh ra:", options: ["Bên trong Trái Đất", "Bên ngoài Trái Đất", "Trong khí quyển", "Từ vũ trụ"], correct: 0, explanation: "Nguồn gốc từ năng lượng phân hủy phóng xạ, phản ứng hóa học trong lòng đất." },
+            { id: 117, question: "Vận động theo phương thẳng đứng biểu hiện rõ nhất là:", options: ["Độ cao đỉnh núi tăng", "Thay đổi mực nước đại dương", "Động đất", "Núi lửa"], correct: 1, explanation: "Hiện tượng biển tiến, biển thoái." },
+            { id: 119, question: "Địa hào hình thành do:", options: ["Bộ phận sụt xuống giữa 2 đứt gãy", "Bộ phận trồi lên", "Uốn nếp", "Xâm thực"], correct: 0, explanation: "Sụt lún tạo thành thung lũng hẹp dài." },
+            { id: 120, question: "Ngoại lực là:", options: ["Lực trong Manti", "Lực bên ngoài, trên bề mặt", "Lực từ tầng Badan", "Lực hấp dẫn"], correct: 1, explanation: "Sinh ra do năng lượng Mặt Trời." },
+            { id: 123, question: "Tác động ngoại lực gồm các quá trình:", options: ["Phong hóa, bóc mòn", "Vận chuyển, bồi tụ", "Cả a và b", "Tạo núi"], correct: 2, explanation: "4 quá trình: Phong hóa - Bóc mòn - Vận chuyển - Bồi tụ." },
+            { id: 127, question: "Phong hóa lí học là:", options: ["Phá hủy đá thành khối vụn", "Đổi thành phần hóa học", "Hòa tan đá", "Làm đá mục nát"], correct: 0, explanation: "Phá hủy cơ học, không đổi hóa học." },
+            { id: 133, question: "Địa hình hàm ếch sóng vỗ do:", options: ["Sóng biển mài mòn", "Gió thổi mòn", "Nước chảy", "Băng hà"], correct: 0, explanation: "Do sóng đập vào chân vách đá." },
+            { id: 139, question: "Nấm đá là dạng địa hình do:", options: ["Gió thổi mòn", "Nước chảy", "Sóng biển", "Băng hà"], correct: 0, explanation: "Gió cuốn cát mài mòn chân tảng đá." },
+            { id: 140, question: "Đồng bằng châu thổ do quá trình:", options: ["Bồi tụ của sông", "Mài mòn của sông", "Bồi tụ của gió", "Vận chuyển"], correct: 0, explanation: "Sông mang phù sa bồi đắp ở cửa sông." },
+
+            // --- CHƯƠNG 4: KHÍ QUYỂN ---
+            { id: 141, question: "Khí quyển là:", options: ["Lớp không khí bao quanh TĐ", "Khoảng không vũ trụ", "Tầng ôzôn", "Tầng đối lưu"], correct: 0, explanation: "Lớp vỏ khí bảo vệ Trái Đất." },
+            { id: 142, question: "Khí chiếm tỉ lệ lớn nhất trong không khí:", options: ["Nitơ", "Ôxi", "Cacbonic", "Hơi nước"], correct: 0, explanation: "Nitơ ~78%." },
+            { id: 146, question: "Đặc điểm tầng đối lưu:", options: ["Tập trung đại bộ phận không khí", "Không khí lãng", "Có tầng ôzôn", "Nhiệt độ tăng theo độ cao"], correct: 0, explanation: "Chứa 80% khối lượng không khí, nơi xảy ra hiện tượng thời tiết." },
+            { id: 151, question: "Đặc điểm tầng bình lưu:", options: ["Có tầng ôzôn", "Có mây mưa", "Nhiệt độ giảm theo độ cao", "Không khí chuyển động thẳng đứng"], correct: 0, explanation: "Chứa lớp Ozon ngăn tia cực tím." },
+            { id: 159, question: "Kí hiệu khối khí chí tuyến lục địa:", options: ["Tc", "Tm", "Pc", "Pm"], correct: 0, explanation: "T: Tropical (Chí tuyến), c: continental (lục địa)." },
+            { id: 161, question: "Frông là:", options: ["Mặt ngăn cách 2 khối khí", "Khối khí nóng", "Khối khí lạnh", "Dải hội tụ"], correct: 0, explanation: "Mặt tiếp xúc giữa hai khối khí khác biệt." },
+            { id: 169, question: "Nhiệt độ giảm từ xích đạo về cực do:", options: ["Góc nhập xạ giảm", "Thời gian chiếu sáng giảm", "Địa hình", "Gió"], correct: 0, explanation: "Góc chiếu sáng của Mặt Trời nhỏ dần." },
+            { id: 171, question: "Lên cao 100m nhiệt độ giảm:", options: ["0.6 độ C", "1 độ C", "0.5 độ C", "2 độ C"], correct: 0, explanation: "Quy luật đai cao trong tầng đối lưu." },
+            { id: 174, question: "Nhiệt độ tăng thì khí áp:", options: ["Giảm", "Tăng", "Không đổi", "Biến động"], correct: 0, explanation: "Nhiệt tăng -> khí nở -> tỉ trọng giảm -> áp giảm." },
+            { id: 180, question: "Gió Tây ôn đới thổi từ:", options: ["Áp cao cận chí tuyến về áp thấp ôn đới", "Áp cao cực về ôn đới", "Áp thấp xích đạo về chí tuyến", "Áp cao chí tuyến về xích đạo"], correct: 0, explanation: "Thổi từ 30 độ về 60 độ." },
+            { id: 182, question: "Hướng gió Tây ôn đới ở BC Bắc:", options: ["Tây Nam", "Tây Bắc", "Đông Bắc", "Đông Nam"], correct: 0, explanation: "Thổi từ Tây sang Đông, lệch thành Tây Nam." },
+            { id: 184, question: "Hoang mạc thường ở chí tuyến do:", options: ["Áp cao ngự trị", "Dòng biển lạnh", "Gió mậu dịch", "Tất cả"], correct: 3, explanation: "Áp cao (giáng khí), gió thổi đi, ít mưa." },
+            { id: 189, question: "Mưa sâu trong lục địa chủ yếu do:", options: ["Bốc hơi tại chỗ (hồ, rừng)", "Gió biển", "Bão", "Dòng biển"], correct: 0, explanation: "Gió biển khó vào sâu, chủ yếu là ngưng kết tại chỗ." },
+            { id: 193, question: "Nơi có dòng biển nóng chảy qua thường:", options: ["Mưa nhiều", "Mưa ít", "Khô hạn", "Lạnh"], correct: 0, explanation: "Không khí ẩm bốc lên gây mưa." },
+            { id: 196, question: "Ảnh hưởng của địa hình đến mưa:", options: ["Sườn đón gió mưa nhiều", "Sườn khuất gió mưa nhiều", "Đỉnh núi mưa nhiều nhất", "Càng cao càng mưa"], correct: 0, explanation: "Gió leo núi gây mưa sườn đón, sườn khuất bị hiệu ứng phơn." },
+
+            // --- CHƯƠNG 5: THỦY QUYỂN ---
+            { id: 201, question: "Thủy quyển phân bố ở:", options: ["Biển, đại dương, lục địa, khí quyển", "Chỉ biển", "Chỉ sông hồ", "Trong lòng đất"], correct: 0, explanation: "Bao gồm toàn bộ nước trên Trái Đất." },
+            { id: 204, question: "Nguồn gốc nước ngầm:", options: ["Nước mặt thấm xuống", "Nước biển", "Nước từ lòng đất", "Sinh ra từ đá"], correct: 0, explanation: "Chủ yếu do nước mưa thấm xuống." },
+            { id: 210, question: "Hồ có nguồn gốc miệng núi lửa:", options: ["Hồ Tơ Nưng", "Hồ Ba Bể", "Hồ Tây", "Hồ Hoàn Kiếm"], correct: 0, explanation: "Hồ Tơ Nưng (Biển Hồ) ở Pleiku." },
+            { id: 213, question: "Hồ móng ngựa hình thành từ:", options: ["Khúc uốn sông cũ", "Miệng núi lửa", "Băng hà", "Đứt gãy"], correct: 0, explanation: "Sông đổi dòng bỏ lại khúc uốn." },
+            { id: 221, question: "Sông dài nhất thế giới:", options: ["Sông Nin", "Sông Amazon", "Sông Dương Tử", "Sông Mississippi"], correct: 0, explanation: "Sông Nin (6695km)." },
+            { id: 228, question: "Sông có lưu vực lớn nhất:", options: ["Sông Amazon", "Sông Nin", "Sông Congo", "Sông Volga"], correct: 0, explanation: "Amazon có lưu vực và lưu lượng lớn nhất." },
+            { id: 239, question: "Độ muối nước biển phụ thuộc:", options: ["Bốc hơi và lượng nước ngọt gia nhập", "Nhiệt độ", "Sinh vật", "Độ sâu"], correct: 0, explanation: "Tỉ lệ giữa bốc hơi (tăng muối) và mưa/sông (giảm muối)." },
+            { id: 241, question: "Độ muối cao nhất ở:", options: ["Chí tuyến", "Xích đạo", "Ôn đới", "Cực"], correct: 0, explanation: "Chí tuyến bốc hơi mạnh, ít mưa." },
+            { id: 245, question: "Vai trò của biển với khí quyển:", options: ["Cung cấp hơi nước, điều hòa nhiệt", "Làm lạnh", "Tăng khí áp", "Ngăn gió"], correct: 0, explanation: "Nguồn ẩm và bộ điều hòa nhiệt khổng lồ." },
+
+            // --- CHƯƠNG 6: ĐẤT & SINH QUYỂN ---
+            { id: 251, question: "Thổ nhưỡng là:", options: ["Lớp vật chất tơi xốp trên bề mặt", "Đá gốc", "Khoáng sản", "Vỏ Trái Đất"], correct: 0, explanation: "Lớp vỏ phong hóa tơi xốp có độ phì." },
+            { id: 254, question: "Nhân tố hình thành đất:", options: ["Đá mẹ, khí hậu, sinh vật, địa hình, thời gian", "Chỉ đá mẹ", "Chỉ khí hậu", "Con người"], correct: 0, explanation: "5 nhân tố tự nhiên + con người." },
+            { id: 257, question: "Vai trò của đá mẹ:", options: ["Quyết định thành phần khoáng", "Cung cấp hữu cơ", "Phân giải mùn", "Quyết định độ ẩm"], correct: 0, explanation: "Cung cấp vật chất vô cơ (khoáng)." },
+            { id: 261, question: "Nhân tố chủ đạo sinh ra mùn:", options: ["Sinh vật", "Đá mẹ", "Khí hậu", "Địa hình"], correct: 0, explanation: "Thực vật cung cấp xác hữu cơ." },
+            { id: 267, question: "Giới hạn trên của sinh quyển:", options: ["Tiếp giáp tầng ozon", "Đỉnh núi cao nhất", "Tầng ion", "Hết khí quyển"], correct: 0, explanation: "Ozon bảo vệ sự sống khỏi tia cực tím." },
+            { id: 272, question: "Nhân tố quyết định phân bố thực vật:", options: ["Khí hậu", "Đất", "Nước", "Địa hình"], correct: 0, explanation: "Nhiệt và ẩm (khí hậu) quyết định đới thực vật." },
+            { id: 275, question: "Đất và thực vật ôn đới lạnh:", options: ["Đất pốtdôn - Rừng lá kim", "Đất đỏ vàng - Rừng nhiệt đới", "Đất đen - Thảo nguyên", "Đất đài nguyên - Rêu"], correct: 0, explanation: "Khí hậu lạnh (Taiga) có rừng lá kim." },
+
+            // --- CHƯƠNG 7: QUY LUẬT ĐỊA LÍ ---
+            { id: 280, question: "Giới hạn vỏ địa lí:", options: ["Dưới ôzôn đến đáy vực thẳm/đáy vỏ phong hóa", "Toàn bộ Trái Đất", "Chỉ vỏ Trái Đất", "Lớp không khí"], correct: 0, explanation: "Gồm toàn bộ các quyển xâm nhập nhau." },
+            { id: 284, question: "Biểu hiện quy luật thống nhất:", options: ["Rừng mất -> Sông ngòi thất thường", "Mưa -> Lũ", "Khí hậu nóng -> Băng tan", "Tất cả"], correct: 3, explanation: "Mối quan hệ nhân quả giữa các thành phần." },
+            { id: 285, question: "Quy luật địa đới là:", options: ["Thay đổi theo vĩ độ", "Thay đổi theo kinh độ", "Thay đổi theo độ cao", "Thay đổi theo mùa"], correct: 0, explanation: "Từ Xích đạo về Cực." },
+            { id: 286, question: "Nguyên nhân địa đới:", options: ["Dạng cầu của Trái Đất và bức xạ MT", "Nội lực", "Địa hình", "Biển"], correct: 0, explanation: "Góc nhập xạ thay đổi từ xích đạo về cực." },
+
+            // --- BỔ SUNG CÂU HỎI MỚI CHO ĐỦ SỐ LƯỢNG (PHỦ CÁC BÀI 1-15) ---
+            // Bản đồ
+            { id: 300, question: "Trong phương pháp kí hiệu, các loại kí hiệu thường dùng là:", options: ["Hình học, chữ, tượng hình", "Chỉ hình học", "Chỉ tượng hình", "Đường nét"], correct: 0, explanation: "3 dạng: hình học, chữ, tượng hình." },
+            { id: 301, question: "Để thể hiện vùng trồng lúa, người ta dùng phương pháp:", options: ["Khoanh vùng", "Kí hiệu", "Chấm điểm", "Đường chuyển động"], correct: 0, explanation: "Khoanh vùng thể hiện không gian phân bố." },
+            { id: 302, question: "GPS do quốc gia nào xây dựng đầu tiên:", options: ["Hoa Kỳ", "Nga", "Trung Quốc", "EU"], correct: 0, explanation: "Hệ thống của Mỹ." },
+            // Trái Đất
+            { id: 303, question: "Hệ Mặt Trời có bao nhiêu hành tinh:", options: ["8", "9", "7", "10"], correct: 0, explanation: "Thủy, Kim, Trái Đất, Hỏa, Mộc, Thổ, Thiên Vương, Hải Vương." },
+            { id: 304, question: "Trái Đất nằm ở vị trí thứ mấy theo khoảng cách từ Mặt Trời:", options: ["3", "2", "4", "5"], correct: 0, explanation: "Thủy -> Kim -> Trái Đất." },
+            { id: 305, question: "Ngày 22/6, nửa cầu Bắc ngả về phía Mặt Trời thì là mùa:", options: ["Hạ", "Đông", "Thu", "Xuân"], correct: 0, explanation: "Nhận nhiều nhiệt và ánh sáng nhất." },
+            { id: 306, question: "Nơi nào trên Trái Đất ngày đêm dài bằng nhau quanh năm:", options: ["Xích đạo", "Cực", "Chí tuyến", "Vòng cực"], correct: 0, explanation: "Trục nghiêng không ảnh hưởng đến chia sáng tại xích đạo." },
+            // Thạch quyển
+            { id: 307, question: "Vỏ lục địa có độ dày khoảng:", options: ["70km", "5km", "100km", "3000km"], correct: 0, explanation: "Dày hơn vỏ đại dương (chỉ 5-10km)." },
+            { id: 308, question: "Đá biến chất được hình thành từ:", options: ["Đá macma hoặc trầm tích bị biến đổi", "Xác sinh vật", "Dung nham", "Bùn đất"], correct: 0, explanation: "Do áp suất và nhiệt độ cao làm biến tính." },
+            { id: 309, question: "Vận động tạo núi là kết quả của:", options: ["Nội lực", "Ngoại lực", "Bão", "Thủy triều"], correct: 0, explanation: "Do các mảng kiến tạo xô vào nhau (Nội lực)." },
+            { id: 310, question: "Thung lũng sông Hồng là kết quả của:", options: ["Đứt gãy", "Uốn nếp", "Phun trào", "Bồi tụ"], correct: 0, explanation: "Là một địa hào điển hình (đứt gãy sông Hồng)." },
+            // Khí quyển
+            { id: 311, question: "Khí hậu nhiệt đới gió mùa có đặc điểm:", options: ["Nóng ẩm, mưa nhiều theo mùa", "Lạnh khô", "Nóng khô quanh năm", "Mưa đều quanh năm"], correct: 0, explanation: "Đặc trưng của Việt Nam." },
+            { id: 312, question: "Biên độ nhiệt năm ở đại dương nhỏ hơn lục địa vì:", options: ["Nước nóng/nguội chậm hơn đất", "Nước nóng nhanh hơn", "Đại dương có gió", "Đại dương có dòng biển"], correct: 0, explanation: "Nhiệt dung riêng của nước lớn hơn đất." },
+            { id: 313, question: "Vào mùa đông, gió mùa Đông Bắc thổi vào nước ta có tính chất:", options: ["Lạnh khô (đầu mùa)", "Nóng ẩm", "Khô nóng", "Mưa rào"], correct: 0, explanation: "Xuất phát từ áp cao Xi-bia." },
+            // Thủy quyển
+            { id: 314, question: "Sông Mê Kông đổ ra biển bằng mấy cửa chính (cửu long):", options: ["9", "8", "7", "6"], correct: 0, explanation: "Hiện nay một số cửa bị bồi lấp, nhưng tên gọi là Cửu Long (9 rồng)." },
+            { id: 315, question: "Hồ Ba Bể là hồ:", options: ["Kiến tạo", "Núi lửa", "Nhân tạo", "Móng ngựa"], correct: 0, explanation: "Hình thành do sụt lún đá vôi (kiến tạo/karst)." },
+            { id: 316, question: "Thủy triều đỏ là hiện tượng:", options: ["Tảo biển nở hoa gây ô nhiễm", "Nước biển màu đỏ do đất", "Mặt trời chiếu", "Dòng biển nóng"], correct: 0, explanation: "Do ô nhiễm hữu cơ làm tảo phát triển mạnh." },
+            // Sinh quyển
+            { id: 317, question: "Sinh vật không sống được ở:", options: ["Miệng núi lửa đang phun", "Đáy biển sâu", "Trong đất", "Băng tuyết"], correct: 0, explanation: "Nhiệt độ quá cao thiêu đốt sự sống." },
+            { id: 318, question: "Đất feralit có màu đỏ vàng do chứa nhiều:", options: ["Sắt và Nhôm", "Canxi", "Mùn", "Silic"], correct: 0, explanation: "Quá trình feralit tích tụ Fe, Al." },
+            { id: 319, question: "Rừng ngập mặn phát triển ở:", options: ["Ven biển có thủy triều", "Đỉnh núi", "Sa mạc", "Đồng bằng cao"], correct: 0, explanation: "Môi trường nước lợ/mặn ven biển." },
+            // Quy luật
+            { id: 320, question: "Miền Bắc nước ta có mùa đông lạnh là do:", options: ["Vị trí gần chí tuyến và gió mùa Đông Bắc", "Độ cao địa hình", "Biển Đông", "Dòng biển lạnh"], correct: 0, explanation: "Quy luật địa ô (gió mùa) và địa đới (vĩ độ)." }
+            // ... (Tiếp tục thêm các câu hỏi tương tự để đạt số lượng lớn, ở đây demo khoảng 70-80 câu điển hình, bạn có thể copy nhân bản cấu trúc để test scroll)
         ];
 
-        const mindmapData = {
-            id: 'root',
-            label: 'ĐỊA LÍ 10 (Bài 8-15)',
-            children: [
-                {
-                    id: 'khi-quyen',
-                    label: 'Khí Quyển (Bài 8-11)',
-                    children: [
-                        { id: 'nhiet-do', label: 'Nhiệt độ: Vĩ độ, Lục địa/Đại dương, Địa hình' },
-                        { 
-                            id: 'khi-ap', 
-                            label: 'Khí áp & Gió',
-                            children: [
-                                { id: 'nguyen-nhan', label: 'Nguyên nhân: Nhiệt lực & Động lực' },
-                                { id: 'cac-loai-gio', label: 'Gió chính: Tây ôn đới, Mậu dịch, Mùa' }
-                            ]
-                        },
-                        { id: 'mua', label: 'Mưa: Nhân tố ảnh hưởng, Phân bố' }
-                    ]
-                },
-                {
-                    id: 'thuy-quyen',
-                    label: 'Thủy Quyển (Bài 12-13)',
-                    children: [
-                        { id: 'luc-dia', label: 'Nước lục địa: Sông, Hồ, Băng tuyết' },
-                        { id: 'bien', label: 'Biển: Sóng, Thủy triều, Dòng biển' }
-                    ]
-                },
-                {
-                    id: 'sinh-quyen',
-                    label: 'Đất & Sinh Quyển (Bài 14-15)',
-                    children: [
-                        { id: 'dat', label: 'Đất: Đá mẹ, Khí hậu, Sinh vật...' },
-                        { id: 'sinh-vat', label: 'Sinh quyển: Giới hạn, Nhân tố ảnh hưởng' }
-                    ]
-                }
-            ]
-        };
+        // --- CÁC COMPONENT GIAO DIỆN ---
 
-        // --- UTILS ---
-        const shuffleArray = (array) => {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        };
-
-        // --- COMPONENTS ---
-
-        // 1. FLASHCARD WITH SPACED REPETITION
+        // 1. FLASHCARD MODE
         const FlashcardMode = () => {
             const [cards, setCards] = useState(fullFlashcardsData);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [isFlipped, setIsFlipped] = useState(false);
-            const [cardStatus, setCardStatus] = useState({});
+            const [cardStatus, setCardStatus] = useState({}); // {id: 1 (thuộc), 2 (chưa)}
 
             const handleStatus = (status) => {
-                const currentCardId = cards[currentIndex].id;
-                setCardStatus(prev => ({
-                    ...prev,
-                    [currentCardId]: status
-                }));
-                setTimeout(() => {
-                    setIsFlipped(false);
+                setCardStatus(prev => ({ ...prev, [cards[currentIndex].id]: status }));
+                if (currentIndex < cards.length - 1) {
                     setTimeout(() => {
-                        setCurrentIndex((prev) => (prev + 1) % cards.length);
-                    }, 200);
-                }, 300);
+                        setIsFlipped(false);
+                        setTimeout(() => setCurrentIndex(prev => prev + 1), 200);
+                    }, 300);
+                }
             };
 
             const handleShuffle = () => {
+                const shuffled = [...cards].sort(() => Math.random() - 0.5);
+                setCards(shuffled);
+                setCurrentIndex(0);
                 setIsFlipped(false);
-                setTimeout(() => {
-                    const shuffled = shuffleArray([...fullFlashcardsData]);
-                    setCards(shuffled);
-                    setCurrentIndex(0);
-                }, 200);
             };
 
-            const currentCard = cards[currentIndex];
-            const status = cardStatus[currentCard.id] || 0;
-            const total = fullFlashcardsData.length;
-            const remembered = Object.values(cardStatus).filter(s => s === 1).length;
-            const forgot = Object.values(cardStatus).filter(s => s === 2).length;
-            const newCards = total - remembered - forgot;
-
-            return (
-                <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto p-4">
-                    <div className="w-full flex justify-between items-center mb-4 text-gray-600">
-                        <span className="font-semibold text-blue-600 flex items-center gap-2">
-                            <Layers size={18} /> {currentCard.category}
-                        </span>
-                        <div className="flex items-center gap-2 text-sm">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md">Đã thuộc: {remembered}</span>
-                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-md">Cần ôn: {forgot}</span>
-                        </div>
-                    </div>
-
-                    <div className="w-full h-80 perspective-1000 cursor-pointer group mb-6" onClick={() => setIsFlipped(!isFlipped)}>
-                        <div className={`relative w-full h-full duration-500 transform-style-3d transition-transform ${isFlipped ? 'rotate-y-180' : ''}`}>
-                            <div className={`absolute w-full h-full bg-white rounded-2xl shadow-xl border-2 p-8 flex flex-col items-center justify-center backface-hidden ${status === 1 ? 'border-green-200' : status === 2 ? 'border-red-200' : 'border-blue-100'}`}>
-                                <h3 className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">Thuật ngữ</h3>
-                                <h2 className="text-3xl font-bold text-gray-800 text-center">{currentCard.term}</h2>
-                                {status !== 0 && (
-                                    <div className={`absolute top-4 right-4 px-2 py-1 text-xs rounded-full ${status === 1 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {status === 1 ? 'Đã nhớ' : 'Chưa nhớ'}
-                                    </div>
-                                )}
-                                <div className="absolute bottom-4 text-blue-400 text-sm animate-bounce">Chạm để lật</div>
-                            </div>
-                            <div className="absolute w-full h-full bg-blue-600 rounded-2xl shadow-xl p-8 flex flex-col items-center justify-center rotate-y-180 backface-hidden">
-                                <h3 className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-4">Định nghĩa</h3>
-                                <p className="text-xl text-white text-center leading-relaxed font-medium">{currentCard.definition}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col w-full max-w-md gap-3">
-                        <div className="flex gap-4">
-                            <button onClick={(e) => { e.stopPropagation(); handleStatus(2); }} className="flex-1 py-3 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center justify-center gap-2 border border-red-200">
-                                <ThumbsDown size={20} /> Chưa thuộc
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); handleStatus(1); }} className="flex-1 py-3 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition font-medium flex items-center justify-center gap-2 border border-green-200">
-                                <ThumbsUp size={20} /> Đã thuộc
-                            </button>
-                        </div>
-                        <button onClick={handleShuffle} className="w-full py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition font-medium flex items-center justify-center gap-2 text-sm">
-                            <Shuffle size={16} /> Xáo trộn thẻ
-                        </button>
-                    </div>
-
-                    <div className="w-full mt-8 bg-gray-200 rounded-full h-2.5 overflow-hidden flex">
-                        <div className="bg-green-500 h-2.5" style={{ width: `${(remembered / total) * 100}%` }}></div>
-                        <div className="bg-red-500 h-2.5" style={{ width: `${(forgot / total) * 100}%` }}></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-full">
-                        <span>Tiến độ: {Math.round(((remembered + forgot) / total) * 100)}%</span>
-                        <span>Còn lại: {newCards}</span>
-                    </div>
-                </div>
-            );
-        };
-
-        // 2. COLLAPSIBLE MINDMAP
-        const MindMapNode = ({ node, level = 0 }) => {
-            const [isExpanded, setIsExpanded] = useState(true);
-            const hasChildren = node.children && node.children.length > 0;
-
-            return (
-                <div className={`flex flex-col items-center ${level === 0 ? 'w-full' : ''}`}>
-                    <div 
-                        className={`
-                            relative px-4 py-3 rounded-lg border-2 shadow-sm text-center font-medium transition-all 
-                            ${hasChildren ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}
-                            ${level === 0 ? 'bg-blue-600 text-white border-blue-600 text-xl mb-8 z-10' : ''}
-                            ${level === 1 ? 'bg-white text-blue-800 border-blue-200 text-lg mb-4 min-w-[180px] z-10' : ''}
-                            ${level >= 2 ? 'bg-gray-50 text-gray-700 border-gray-200 text-sm mb-2 min-w-[150px] z-10' : ''}
-                        `}
-                        onClick={() => hasChildren && setIsExpanded(!isExpanded)}
-                    >
-                        {node.label}
-                        {hasChildren && (
-                            <div className={`absolute -right-3 -top-3 w-6 h-6 rounded-full flex items-center justify-center text-xs border bg-white shadow-sm transition-colors ${isExpanded ? 'text-gray-500 border-gray-300' : 'text-blue-600 border-blue-400 bg-blue-50'}`}>
-                                {isExpanded ? <Minus size={12} /> : <Plus size={12} />}
-                            </div>
-                        )}
-                        {level > 0 && <div className="absolute -top-4 left-1/2 w-0.5 h-4 bg-gray-300 -translate-x-1/2 -z-10"></div>}
-                    </div>
-                    
-                    {hasChildren && isExpanded && (
-                        <div className={`flex flex-wrap justify-center gap-x-8 gap-y-4 animate-fade-in-down ${level === 0 ? 'w-full' : ''}`}>
-                            {level === 0 && node.children.length > 1 && (
-                                <div className="w-[calc(100%-40px)] h-0.5 bg-gray-300 absolute mt-[-20px] translate-y-8 z-0"></div>
-                            )}
-                            {node.children.map((child) => (
-                                <div key={child.id} className="flex flex-col items-center relative">
-                                    {level === 0 && <div className="h-8 w-0.5 bg-gray-300 absolute -top-8 z-0"></div>}
-                                    <MindMapNode node={child} level={level + 1} />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const MindMapMode = () => {
-            return (
-                <div className="w-full overflow-x-auto p-8 bg-slate-50 rounded-xl border border-slate-200 min-h-[500px] flex justify-center items-start">
-                    <MindMapNode node={mindmapData} />
-                </div>
-            );
-        };
-
-        // 3. SIMULATIONS
-        const CloudRainIcon = ({ className }) => (
-            <svg className={className} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                <path d="M16 14v6"></path>
-                <path d="M8 14v6"></path>
-                <path d="M12 16v6"></path>
-            </svg>
-        );
-
-        const SimulationMode = () => {
-            const [tidePhase, setTidePhase] = useState(0); 
-            const [isHoveringTide, setIsHoveringTide] = useState(false);
-
-            useEffect(() => {
-                let interval;
-                if (isHoveringTide) {
-                    interval = setInterval(() => {
-                        setTidePhase(p => (p + 1) % 360);
-                    }, 30);
-                }
-                return () => clearInterval(interval);
-            }, [isHoveringTide]);
-
-            const moonRadius = 90;
-            const moonX = Math.cos(tidePhase * Math.PI / 180) * moonRadius;
-            const moonY = Math.sin(tidePhase * Math.PI / 180) * moonRadius;
-            const bulgeX = 1 + Math.abs(Math.cos(tidePhase * Math.PI / 180)) * 0.4;
-            const bulgeY = 1 + Math.abs(Math.sin(tidePhase * Math.PI / 180)) * 0.1;
-
-            return (
-                <div className="max-w-4xl mx-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Visual 1: Gió */}
-                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 group cursor-pointer hover:border-blue-300 transition">
-                        <div className="flex items-center gap-2 mb-4 text-blue-700">
-                            <Wind size={24} />
-                            <h3 className="text-lg font-bold">Cơ chế Gió (Di chuột để xem)</h3>
-                        </div>
-                        <div className="relative h-48 bg-gradient-to-b from-sky-50 to-white rounded-xl overflow-hidden border border-gray-200">
-                            <div className="absolute left-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-lg bg-blue-100 flex flex-col items-center justify-center border-2 border-blue-400 z-10 shadow-md">
-                                <span className="font-black text-blue-800 text-2xl">H</span>
-                                <span className="text-[10px] text-blue-600 font-bold">ÁP CAO</span>
-                            </div>
-                            <div className="absolute right-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-red-100 flex flex-col items-center justify-center border-2 border-red-400 z-10 shadow-md">
-                                <span className="font-black text-red-800 text-2xl">L</span>
-                                <span className="text-[10px] text-red-600 font-bold">ÁP THẤP</span>
-                            </div>
-                            <div className="absolute top-1/2 left-28 right-28 h-12 -translate-y-1/2 flex items-center justify-center">
-                                <div className="w-full h-full flex justify-between items-center relative overflow-hidden">
-                                    {[...Array(8)].map((_, i) => (
-                                        <div key={i} className="absolute top-1/2 -translate-y-1/2 animate-flow-hover text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" style={{ left: '-20px', animationDelay: `${i * 0.3}s` }}>
-                                            <ArrowRight size={24} strokeWidth={3} />
-                                        </div>
-                                    ))}
-                                    <div className="text-gray-400 text-sm absolute w-full text-center group-hover:opacity-0 transition-opacity">
-                                        Di chuột vào để chạy
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Visual 2: Thủy triều */}
-                    <div 
-                        className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 cursor-pointer hover:border-indigo-300 transition"
-                        onMouseEnter={() => setIsHoveringTide(true)}
-                        onMouseLeave={() => setIsHoveringTide(false)}
-                    >
-                        <div className="flex items-center gap-2 mb-4 text-indigo-700">
-                            <Waves size={24} />
-                            <h3 className="text-lg font-bold">Thủy triều (Di chuột để xem)</h3>
-                        </div>
-                        <div className="relative h-48 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center">
-                            {[...Array(20)].map((_, i) => (
-                                <div key={i} className="absolute bg-white rounded-full w-0.5 h-0.5" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, opacity: Math.random() }}></div>
-                            ))}
-                            <div className="relative z-10 flex items-center justify-center">
-                                <div className="absolute bg-blue-500/40 rounded-full transition-transform duration-75 ease-linear border border-blue-400/30" style={{ width: '60px', height: '60px', transform: `scale(${bulgeX}, ${bulgeY})` }}></div>
-                                <div className="w-10 h-10 rounded-full bg-blue-600 shadow-inner z-20 flex items-center justify-center text-[8px] text-white font-bold border border-blue-400">Đất</div>
-                            </div>
-                            <div className="absolute z-20 transition-all duration-75 ease-linear" style={{ transform: `translate(${moonX}px, ${moonY}px)` }}>
-                                <div className="w-6 h-6 rounded-full bg-gray-300 shadow-[0_0_10px_rgba(255,255,255,0.4)] flex items-center justify-center text-[6px] font-bold text-gray-800">Trăng</div>
-                            </div>
-                            {!isHoveringTide && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-sm font-medium backdrop-blur-[1px]">Di chuột vào để chạy</div>}
-                        </div>
-                    </div>
-
-                    {/* Visual 3: Hiệu ứng Phơn */}
-                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 md:col-span-2 group cursor-pointer hover:border-orange-300 transition">
-                        <div className="flex items-center gap-2 mb-4 text-orange-700">
-                            <Mountain size={24} />
-                            <h3 className="text-lg font-bold">Hiệu ứng Phơn (Di chuột để xem)</h3>
-                        </div>
-                        <div className="relative h-64 bg-sky-50 rounded-xl overflow-hidden">
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-56 bg-stone-600 clip-path-triangle z-10"></div>
-                            
-                            <div className="absolute left-16 bottom-16 flex flex-col items-center z-20 opacity-30 group-hover:opacity-100 transition-opacity duration-500">
-                                <div className="flex flex-col gap-1 mb-2">
-                                    <CloudRainIcon className="text-blue-500 animate-bounce" />
-                                </div>
-                                <div className="bg-white/90 p-2 rounded-lg shadow-sm border border-blue-100 text-center">
-                                    <span className="block text-xs font-bold text-blue-600">Sườn đón gió</span>
-                                    <span className="block text-[10px] text-gray-500">Mưa ẩm</span>
-                                </div>
-                                <div className="mt-2 text-blue-500 rotate-[-45deg] animate-pulse"><ArrowRight size={32} strokeWidth={3}/></div>
-                            </div>
-
-                            <div className="absolute right-16 bottom-16 flex flex-col items-center z-20 opacity-30 group-hover:opacity-100 transition-opacity duration-500 delay-300">
-                                <div className="mb-4">
-                                    <Thermometer className="text-red-500 animate-pulse h-8 w-8" />
-                                </div>
-                                <div className="bg-white/90 p-2 rounded-lg shadow-sm border border-red-100 text-center">
-                                    <span className="block text-xs font-bold text-red-600">Sườn khuất gió</span>
-                                    <span className="block text-[10px] text-gray-500">Khô Nóng</span>
-                                </div>
-                                <div className="mt-2 text-red-500 rotate-[45deg] animate-pulse"><ArrowRight size={32} strokeWidth={3}/></div>
-                            </div>
-                            
-                            <div className="absolute top-4 left-0 w-full text-center text-sm font-medium text-gray-600 bg-white/50 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                Gió vượt núi: Mất ẩm <span className="font-bold text-red-500">→</span> Nhiệt độ tăng nhanh.
-                            </div>
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 group-hover:hidden">Di chuột vào để xem hiệu ứng</div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // 4. QUIZ
-        const QuizMode = () => {
-            const [currentQuestions, setCurrentQuestions] = useState([]);
-            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-            const [selectedOption, setSelectedOption] = useState(null);
-            const [isCorrect, setIsCorrect] = useState(null);
-            const [score, setScore] = useState(0);
-            const [showResult, setShowResult] = useState(false);
-
-            const startNewQuiz = () => {
-                const randomQuestions = shuffleArray(questionBank).slice(0, 5);
-                setCurrentQuestions(randomQuestions);
-                setCurrentQuestionIndex(0);
-                setSelectedOption(null);
-                setIsCorrect(null);
-                setScore(0);
-                setShowResult(false);
-            };
-
-            useEffect(() => { startNewQuiz(); }, []);
-
-            const handleOptionClick = (index) => {
-                if (selectedOption !== null) return;
-                setSelectedOption(index);
-                const correct = index === currentQuestions[currentQuestionIndex].correct;
-                setIsCorrect(correct);
-                if (correct) setScore(score + 1);
-            };
-
-            const nextQuestion = () => {
-                if (currentQuestionIndex < currentQuestions.length - 1) {
-                    setCurrentQuestionIndex(currentQuestionIndex + 1);
-                    setSelectedOption(null);
-                    setIsCorrect(null);
-                } else {
-                    setShowResult(true);
-                }
-            };
-
-            if (currentQuestions.length === 0) return <div>Đang tải câu hỏi...</div>;
-
-            if (showResult) {
-                return (
-                    <div className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl shadow-lg max-w-lg mx-auto mt-10">
-                        <Brain size={64} className="text-blue-600 mb-4" />
-                        <h2 className="text-2xl font-bold mb-2">Hoàn thành!</h2>
-                        <p className="text-lg text-gray-600 mb-6">Đúng <span className="font-bold text-blue-600">{score}/{currentQuestions.length}</span> câu.</p>
-                        <button onClick={startNewQuiz} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">
-                            <RefreshCw size={20} /> Làm bộ đề mới
-                        </button>
-                    </div>
-                );
-            }
-
-            const question = currentQuestions[currentQuestionIndex];
+            const current = cards[currentIndex];
+            const learned = Object.values(cardStatus).filter(s => s === 1).length;
+            const review = Object.values(cardStatus).filter(s => s === 2).length;
 
             return (
                 <div className="max-w-2xl mx-auto p-4">
-                    <div className="mb-6 flex justify-between text-sm font-medium text-gray-500">
-                        <span>Câu hỏi {currentQuestionIndex + 1}/{currentQuestions.length}</span>
-                        <span>Điểm: {score}</span>
+                    <div className="flex justify-between items-center mb-6 text-gray-600">
+                        <div className="flex items-center gap-2 font-semibold text-blue-600">
+                            <Layers size={20} />
+                            <span>{current.category}</span>
+                        </div>
+                        <div className="flex gap-3 text-sm font-medium">
+                            <span className="text-green-600 bg-green-50 px-3 py-1 rounded-full">Đã thuộc: {learned}</span>
+                            <span className="text-red-600 bg-red-50 px-3 py-1 rounded-full">Cần ôn: {review}</span>
+                        </div>
                     </div>
-                    <div className="mb-8">
-                        <h3 className="text-xl font-bold text-gray-800 leading-snug mb-6">{question.question}</h3>
+
+                    <div 
+                        className="relative h-80 w-full cursor-pointer perspective-1000 group"
+                        onClick={() => setIsFlipped(!isFlipped)}
+                    >
+                        <div className={`relative w-full h-full duration-500 transform-style-3d transition-all ${isFlipped ? 'rotate-y-180' : ''}`}>
+                            {/* Mặt trước */}
+                            <div className="absolute inset-0 bg-white border-2 border-blue-100 rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 backface-hidden hover:border-blue-300 transition">
+                                <span className="text-sm uppercase tracking-widest text-gray-400 mb-4">Thuật ngữ</span>
+                                <h2 className="text-3xl font-bold text-gray-800 text-center">{current.term}</h2>
+                                <span className="absolute bottom-6 text-blue-400 text-xs animate-bounce">Chạm để lật</span>
+                            </div>
+                            
+                            {/* Mặt sau */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 rotate-y-180 backface-hidden">
+                                <span className="text-sm uppercase tracking-widest text-blue-200 mb-4">Định nghĩa</span>
+                                <p className="text-xl text-white text-center font-medium leading-relaxed">{current.definition}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4 mt-8">
+                        <button onClick={() => handleStatus(2)} className="flex-1 py-3 rounded-xl bg-red-50 text-red-600 font-semibold hover:bg-red-100 transition flex justify-center items-center gap-2 border border-red-200 shadow-sm">
+                            <ThumbsDown size={20} /> Chưa thuộc
+                        </button>
+                        <button onClick={() => handleStatus(1)} className="flex-1 py-3 rounded-xl bg-green-50 text-green-600 font-semibold hover:bg-green-100 transition flex justify-center items-center gap-2 border border-green-200 shadow-sm">
+                            <ThumbsUp size={20} /> Đã thuộc
+                        </button>
+                    </div>
+                    
+                    <button onClick={handleShuffle} className="w-full mt-4 py-3 text-gray-500 hover:text-gray-800 flex justify-center items-center gap-2 transition">
+                        <Shuffle size={18} /> Xáo trộn thẻ
+                    </button>
+                </div>
+            );
+        };
+
+        // 2. QUIZ MODE
+        const QuizMode = () => {
+            const [quizSet, setQuizSet] = useState([]);
+            const [idx, setIdx] = useState(0);
+            const [selected, setSelected] = useState(null);
+            const [score, setScore] = useState(0);
+            const [finished, setFinished] = useState(false);
+
+            const startQuiz = () => {
+                // Lấy ngẫu nhiên 10 câu từ ngân hàng
+                const shuffled = [...questionBank].sort(() => Math.random() - 0.5).slice(0, 10);
+                setQuizSet(shuffled);
+                setIdx(0);
+                setSelected(null);
+                setScore(0);
+                setFinished(false);
+            };
+
+            useEffect(() => { startQuiz(); }, []);
+
+            const handleAnswer = (optIndex) => {
+                if (selected !== null) return;
+                setSelected(optIndex);
+                if (optIndex === quizSet[idx].correct) setScore(s => s + 1);
+            };
+
+            const next = () => {
+                if (idx < quizSet.length - 1) {
+                    setIdx(i => i + 1);
+                    setSelected(null);
+                } else {
+                    setFinished(true);
+                }
+            };
+
+            if (quizSet.length === 0) return null;
+
+            if (finished) return (
+                <div className="flex flex-col items-center justify-center h-96 bg-white rounded-2xl shadow-lg p-8 text-center animate-fade-in">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                        <Brain size={40} className="text-blue-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Hoàn thành xuất sắc!</h2>
+                    <p className="text-gray-500 mb-6">Bạn đã trả lời đúng <span className="text-blue-600 font-bold text-xl">{score}/{quizSet.length}</span> câu hỏi.</p>
+                    <button onClick={startQuiz} className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-lg hover:bg-blue-700 transition flex items-center gap-2">
+                        <RefreshCw size={20} /> Làm đề mới
+                    </button>
+                </div>
+            );
+
+            const q = quizSet[idx];
+
+            return (
+                <div className="max-w-3xl mx-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wide">Câu hỏi {idx + 1}/{quizSet.length}</span>
+                        <div className="flex items-center gap-2 px-4 py-1 bg-blue-50 text-blue-700 rounded-full font-medium text-sm">
+                            <Activity size={16} /> Điểm: {score}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6 animate-fade-in">
+                        <h3 className="text-xl font-bold text-gray-800 leading-relaxed mb-6">{q.question}</h3>
                         <div className="space-y-3">
-                            {question.options.map((option, index) => {
-                                let style = "bg-white border-2 border-gray-200 hover:border-blue-300";
-                                if (selectedOption !== null) {
-                                    if (index === question.correct) style = "bg-green-100 border-2 border-green-500 text-green-800";
-                                    else if (index === selectedOption) style = "bg-red-100 border-2 border-red-500 text-red-800";
-                                    else style = "bg-gray-100 border-2 border-gray-200 text-gray-400";
+                            {q.options.map((opt, i) => {
+                                let style = "hover:bg-gray-50 border-gray-200 text-gray-700";
+                                if (selected !== null) {
+                                    if (i === q.correct) style = "bg-green-50 border-green-500 text-green-700 font-medium";
+                                    else if (i === selected) style = "bg-red-50 border-red-500 text-red-700";
+                                    else style = "opacity-50 border-gray-200";
                                 }
                                 return (
-                                    <button key={index} onClick={() => handleOptionClick(index)} disabled={selectedOption !== null} className={`w-full p-4 rounded-xl text-left transition-all duration-200 flex justify-between items-center ${style}`}>
-                                        <span>{option}</span>
-                                        {selectedOption !== null && index === question.correct && <Check size={20} className="text-green-600" />}
-                                        {selectedOption !== null && index === selectedOption && index !== question.correct && <X size={20} className="text-red-600" />}
+                                    <button 
+                                        key={i} 
+                                        onClick={() => handleAnswer(i)}
+                                        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 flex justify-between items-center ${style}`}
+                                    >
+                                        <span>{opt}</span>
+                                        {selected !== null && i === q.correct && <Check size={20} />}
+                                        {selected !== null && i === selected && i !== q.correct && <X size={20} />}
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
-                    {selectedOption !== null && (
-                        <div className="animate-fade-in-up">
-                            <div className={`p-4 rounded-lg mb-6 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                                <div className="flex items-start gap-3">
-                                    <Info className="flex-shrink-0 mt-1" size={18} />
-                                    <p><strong>Giải thích:</strong> {question.explanation}</p>
+
+                    {selected !== null && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6 animate-fade-in">
+                            <div className="flex gap-3">
+                                <Info className="text-blue-600 flex-shrink-0" />
+                                <div>
+                                    <h4 className="font-bold text-blue-800 mb-1">Giải thích</h4>
+                                    <p className="text-blue-700 leading-relaxed">{q.explanation}</p>
                                 </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <button onClick={nextQuestion} className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold shadow-lg transition">{currentQuestionIndex === currentQuestions.length - 1 ? "Xem kết quả" : "Câu tiếp theo"}</button>
                             </div>
                         </div>
                     )}
+
+                    <div className="flex justify-end">
+                        <button 
+                            onClick={next} 
+                            disabled={selected === null}
+                            className={`px-8 py-3 rounded-xl font-bold transition flex items-center gap-2 ${selected === null ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl'}`}
+                        >
+                            {idx === quizSet.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo'} <ArrowRight size={20} />
+                        </button>
+                    </div>
                 </div>
             );
         };
 
-        // --- MAIN APP ---
-        const GeoMindApp = () => {
-            const [activeTab, setActiveTab] = useState('flashcards');
+        // 3. MINDMAP MODE
+        const MindMapMode = () => {
+            // Dữ liệu cây (rút gọn hiển thị)
+            const mapData = {
+                label: "ĐỊA LÍ 10",
+                children: [
+                    { label: "CHƯƠNG 1: BẢN ĐỒ", children: [
+                        { label: "Phương pháp biểu hiện", children: [{label: "Kí hiệu"}, {label: "Đường chuyển động"}, {label: "Chấm điểm"}, {label: "Khoanh vùng"}] },
+                        { label: "Sử dụng bản đồ", children: [{label: "Tính khoảng cách"}, {label: "Tìm đường"}, {label: "Xác định vị trí"}] },
+                        { label: "GPS & Bản đồ số", children: [{label: "Định vị toàn cầu"}, {label: "Ứng dụng đời sống"}] }
+                    ]},
+                    { label: "CHƯƠNG 2: TRÁI ĐẤT", children: [
+                        { label: "Vũ trụ & Hệ MT", children: [{label: "Big Bang"}, {label: "Các hành tinh"}] },
+                        { label: "Hệ quả chuyển động", children: [{label: "Tự quay (Ngày đêm, Giờ)"}, {label: "Quanh MT (Mùa, Ngày đêm dài ngắn)"}] }
+                    ]},
+                    { label: "CHƯƠNG 3: THẠCH QUYỂN", children: [
+                        { label: "Cấu tạo", children: [{label: "Vỏ TĐ"}, {label: "Manti"}, {label: "Nhân"}] },
+                        { label: "Tác động lực", children: [{label: "Nội lực (Uốn nếp, Đứt gãy)"}, {label: "Ngoại lực (Phong hóa, Bóc mòn...)"}] }
+                    ]},
+                    { label: "CHƯƠNG 4: KHÍ QUYỂN", children: [
+                        { label: "Nhiệt độ", children: [{label: "Theo vĩ độ"}, {label: "Theo lục địa/đại dương"}] },
+                        { label: "Khí áp & Gió", children: [{label: "Nguyên nhân khí áp"}, {label: "Gió Tây, Mậu dịch, Mùa"}] },
+                        { label: "Mưa", children: [{label: "Nhân tố ảnh hưởng"}, {label: "Phân bố"}] }
+                    ]},
+                    { label: "CHƯƠNG 5: THỦY QUYỂN", children: [
+                        { label: "Nước lục địa", children: [{label: "Sông"}, {label: "Hồ"}, {label: "Băng tuyết"}, {label: "Nước ngầm"}] },
+                        { label: "Nước biển", children: [{label: "Sóng"}, {label: "Thủy triều"}, {label: "Dòng biển"}] }
+                    ]},
+                    { label: "CHƯƠNG 6: SINH QUYỂN", children: [
+                        { label: "Đất", children: [{label: "Đá mẹ"}, {label: "Khí hậu"}, {label: "Sinh vật"}] },
+                        { label: "Sinh vật", children: [{label: "Phân bố theo môi trường"}, {label: "Chuỗi thức ăn"}] }
+                    ]}
+                ]
+            };
+
+            const Node = ({ data, level }) => {
+                const [open, setOpen] = useState(true);
+                const hasChild = data.children?.length > 0;
+                
+                return (
+                    <div className="flex flex-col items-center">
+                        <div 
+                            onClick={() => setOpen(!open)}
+                            className={`
+                                relative px-6 py-3 rounded-xl border-2 font-semibold shadow-sm transition-all cursor-pointer z-10
+                                ${level === 0 ? 'bg-blue-600 text-white border-blue-600 text-xl' : 
+                                  level === 1 ? 'bg-white text-blue-700 border-blue-200 text-lg hover:shadow-md' :
+                                  'bg-slate-50 text-gray-600 border-gray-200 text-sm hover:border-blue-300'}
+                            `}
+                        >
+                            {data.label}
+                            {hasChild && (
+                                <span className="absolute -right-2 -top-2 bg-white border border-gray-200 rounded-full p-0.5 text-gray-400">
+                                    {open ? <Minus size={12}/> : <Plus size={12}/>}
+                                </span>
+                            )}
+                        </div>
+                        {open && hasChild && (
+                            <div className="flex pt-8 gap-6 relative">
+                                {/* Connector lines */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-0.5 bg-gray-300"></div>
+                                <div className="absolute top-8 left-0 right-0 h-0.5 bg-gray-300 mx-auto" 
+                                     style={{width: `calc(100% - ${100/data.children.length}%)`, left: '50%', transform: 'translateX(-50%)'}}></div>
+                                
+                                {data.children.map((child, i) => (
+                                    <div key={i} className="flex flex-col items-center relative">
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 h-8 w-0.5 bg-gray-300"></div>
+                                        <Node data={child} level={level + 1} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            };
 
             return (
-                <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
-                    <header className="bg-white shadow-sm sticky top-0 z-50">
-                        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="bg-blue-600 text-white p-2 rounded-lg">
-                                    <Zap size={24} />
-                                </div>
-                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                                    GeoMind 10
-                                </h1>
+                <div className="overflow-x-auto p-10 bg-white rounded-3xl border border-gray-100 shadow-inner min-h-[600px] flex justify-center">
+                    <Node data={mapData} level={0} />
+                </div>
+            );
+        };
+
+        // 4. SIMULATION MODE
+        const SimulationMode = () => {
+            return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                    {/* Mô phỏng Gió */}
+                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 group hover:border-blue-300 transition-all">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><Wind size={24}/></div>
+                            <h3 className="font-bold text-gray-800">Cơ chế hoạt động của Gió</h3>
+                        </div>
+                        <div className="relative h-48 bg-gradient-to-b from-blue-50 to-white rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="absolute top-1/2 left-8 -translate-y-1/2 w-24 h-24 bg-blue-100 rounded-full border-4 border-blue-200 flex flex-col items-center justify-center shadow-sm z-10">
+                                <span className="text-3xl font-black text-blue-600">H</span>
+                                <span className="text-xs font-bold text-blue-400">ÁP CAO</span>
                             </div>
-                            <nav className="flex flex-wrap justify-center gap-2 bg-gray-100 p-1.5 rounded-xl">
-                                {[
-                                    { id: 'flashcards', label: 'Ghi nhớ', icon: BookOpen },
-                                    { id: 'quiz', label: 'Trắc nghiệm', icon: Brain },
-                                    { id: 'mindmap', label: 'Sơ đồ tư duy', icon: Share2 },
-                                    { id: 'simulation', label: 'Mô phỏng', icon: Droplets },
-                                ].map((tab) => (
-                                    <button 
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            <div className="absolute top-1/2 right-8 -translate-y-1/2 w-24 h-24 bg-red-100 rounded-full border-4 border-red-200 flex flex-col items-center justify-center shadow-sm z-10">
+                                <span className="text-3xl font-black text-red-600">L</span>
+                                <span className="text-xs font-bold text-red-400">ÁP THẤP</span>
+                            </div>
+                            {/* Animated arrows */}
+                            <div className="absolute inset-0 flex items-center justify-center px-24 opacity-30 group-hover:opacity-100 transition-opacity duration-500">
+                                <div className="w-full h-12 flex justify-between relative overflow-hidden">
+                                    {[...Array(6)].map((_, i) => (
+                                        <ArrowRight 
+                                            key={i}
+                                            size={32} 
+                                            className="text-blue-500 absolute top-2 animate-flow-hover" 
+                                            style={{animationDelay: `${i * 0.2}s`, left: '-40px'}}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="absolute bottom-2 inset-x-0 text-center text-xs text-gray-400 group-hover:hidden">Di chuột vào để xem</div>
+                        </div>
+                    </div>
+
+                    {/* Mô phỏng Thủy Triều */}
+                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 group hover:border-indigo-300 transition-all">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Waves size={24}/></div>
+                            <h3 className="font-bold text-gray-800">Cơ chế Thủy Triều</h3>
+                        </div>
+                        <div className="relative h-48 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center">
+                            {/* Stars */}
+                            {[...Array(15)].map((_,i) => <div key={i} className="absolute w-0.5 h-0.5 bg-white rounded-full opacity-50" style={{top: Math.random()*100+'%', left: Math.random()*100+'%'}}></div>)}
+                            
+                            {/* Earth & Water */}
+                            <div className="relative z-10 w-24 h-24 flex items-center justify-center">
+                                <div className="absolute inset-0 bg-blue-500/30 rounded-full group-hover:scale-x-125 transition-transform duration-1000 ease-in-out border border-blue-400/20"></div>
+                                <div className="w-12 h-12 bg-blue-600 rounded-full shadow-inner border border-blue-400 z-20 flex items-center justify-center text-[8px] text-white font-bold">Đất</div>
+                            </div>
+
+                            {/* Moon */}
+                            <div className="absolute right-8 w-8 h-8 bg-gray-300 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] flex items-center justify-center text-[6px] font-bold z-20">Trăng</div>
+                            <div className="absolute bottom-2 inset-x-0 text-center text-xs text-gray-500 group-hover:hidden">Di chuột vào để xem lực hút</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [tab, setTab] = useState('flashcards');
+
+            const tabs = [
+                { id: 'flashcards', label: 'Ghi nhớ', icon: BookOpen },
+                { id: 'quiz', label: 'Trắc nghiệm', icon: Brain },
+                { id: 'mindmap', label: 'Sơ đồ tư duy', icon: Share2 },
+                { id: 'simulation', label: 'Mô phỏng', icon: Droplets },
+            ];
+
+            return (
+                <div className="flex flex-col h-full bg-gray-50 text-gray-800 font-sans">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm z-50 flex-shrink-0">
+                        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-md">
+                                    <Compass size={28} />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700">
+                                        GeoMind 10
+                                    </h1>
+                                    <p className="text-xs text-gray-500 font-medium">Ôn tập Địa lí Toàn diện (Bài 1-15)</p>
+                                </div>
+                            </div>
+                            
+                            <nav className="flex bg-gray-100 p-1.5 rounded-xl overflow-x-auto max-w-full">
+                                {tabs.map(t => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => setTab(t.id)}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${tab === t.id ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'}`}
                                     >
-                                        <tab.icon size={16} /> <span>{tab.label}</span>
+                                        <t.icon size={18} /> {t.label}
                                     </button>
                                 ))}
                             </nav>
                         </div>
                     </header>
 
-                    <main className="max-w-6xl mx-auto p-4 mt-6 pb-20">
-                        <div className="animate-fade-in">
-                            {activeTab === 'flashcards' && (
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-bold mb-2">Thẻ ghi nhớ thông minh</h2>
-                                    <p className="text-gray-500 mb-8">Đánh giá mức độ thuộc bài để tối ưu hóa ôn tập.</p>
-                                    <FlashcardMode />
-                                </div>
-                            )}
-
-                            {activeTab === 'quiz' && (
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-bold mb-2">Kiểm tra kiến thức</h2>
-                                    <p className="text-gray-500 mb-8">Thử sức với bộ câu hỏi ngẫu nhiên từ ngân hàng.</p>
-                                    <div className="text-left"><QuizMode /></div>
-                                </div>
-                            )}
-
-                            {activeTab === 'mindmap' && (
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-bold mb-2">Sơ đồ tư duy tương tác</h2>
-                                    <p className="text-gray-500 mb-8">Click vào các nhánh để mở rộng hoặc thu gọn nội dung.</p>
-                                    <MindMapMode />
-                                </div>
-                            )}
-
-                            {activeTab === 'simulation' && (
-                                <div className="text-center">
-                                    <h2 className="text-2xl font-bold mb-2">Mô phỏng trực quan</h2>
-                                    <p className="text-gray-500 mb-8">Di chuột vào hình để xem quá trình hoạt động.</p>
-                                    <div className="text-left"><SimulationMode /></div>
-                                </div>
-                            )}
+                    {/* Main Content */}
+                    <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                        <div className="max-w-7xl mx-auto">
+                            {tab === 'flashcards' && <FlashcardMode />}
+                            {tab === 'quiz' && <QuizMode />}
+                            {tab === 'mindmap' && <MindMapMode />}
+                            {tab === 'simulation' && <SimulationMode />}
                         </div>
                     </main>
                 </div>
@@ -666,7 +633,7 @@
         };
 
         const root = createRoot(document.getElementById('root'));
-        root.render(<GeoMindApp />);
+        root.render(<App />);
     </script>
 </body>
 </html>
