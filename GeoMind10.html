@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoMind 10 - Ôn tập Địa lí 10</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Babel để xử lý JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Import Map để dùng thư viện từ CDN -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+      }
+    }
+    </script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .perspective-1000 { perspective: 1000px; }
+        .clip-path-triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .animate-fade-in-down { animation: fadeInDown 0.3s ease-out forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes flow {
+          0% { transform: translateX(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateX(200px); opacity: 0; }
+        }
+        /* Chỉ chạy animation khi có class group-hover */
+        .group:hover .animate-flow-hover { animation: flow 2s linear infinite; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { 
+            BookOpen, Brain, Zap, ArrowRight, RotateCcw, Check, X, Wind, Waves, 
+            Mountain, Thermometer, Layers, Droplets, Info, Share2, ZoomIn, 
+            RefreshCw, Shuffle, Minus, Plus, PieChart, ThumbsUp, ThumbsDown 
+        } from 'lucide-react';
+
+        // --- DỮ LIỆU ---
+        const fullFlashcardsData = [
+            // Bài 8
+            { id: 1, category: "Khí quyển", term: "Khí quyển", definition: "Lớp không khí bao quanh Trái Đất, chịu ảnh hưởng của Vũ trụ (trước tiên là Mặt Trời)." },
+            { id: 2, category: "Khí quyển", term: "Biên độ nhiệt năm", definition: "Sự chênh lệch giữa nhiệt độ trung bình tháng cao nhất và tháng thấp nhất trong năm." },
+            { id: 3, category: "Khí quyển", term: "Bức xạ mặt trời", definition: "Nguồn năng lượng chính cung cấp nhiệt và ánh sáng cho Trái Đất." },
+            // Bài 9
+            { id: 4, category: "Khí quyển", term: "Khí áp", definition: "Sức nén của không khí xuống bề mặt Trái Đất (tỉ lệ nghịch với độ cao và nhiệt độ)." },
+            { id: 5, category: "Khí quyển", term: "Gió Tây ôn đới", definition: "Thổi từ áp cao cận chí tuyến về áp thấp ôn đới. Hướng Tây là chủ đạo. Tính chất: Ẩm, gây mưa nhiều." },
+            { id: 6, category: "Khí quyển", term: "Gió Mậu dịch", definition: "Thổi từ áp cao cận chí tuyến về áp thấp xích đạo. Tính chất: Khô, ít mưa." },
+            { id: 7, category: "Khí quyển", term: "Gió Phơn", definition: "Gió khô, nóng khi vượt núi (do hiệu ứng phơn: lên cao giảm ẩm/nhiệt, xuống thấp tăng nhiệt khô)." },
+            { id: 8, category: "Khí quyển", term: "Gió Mùa", definition: "Loại gió thổi theo mùa, hướng gió ở hai mùa ngược nhau (do sự nóng lạnh không đều giữa lục địa và đại dương)." },
+            { id: 9, category: "Khí quyển", term: "Gió Đất - Gió Biển", definition: "Hình thành ven biển, thay đổi hướng theo ngày đêm do sự chênh lệch nhiệt độ/khí áp giữa đất và biển." },
+            // Bài 10
+            { id: 10, category: "Khí quyển", term: "Frông (Front)", definition: "Mặt ngăn cách giữa hai khối khí khác biệt về tính chất vật lí (nóng/lạnh), thường gây mưa, nhiễu loạn thời tiết." },
+            { id: 11, category: "Khí quyển", term: "Dải hội tụ nhiệt đới", definition: "Nơi tiếp xúc của hai khối khí có tính chất giống nhau (thường là Tín phong 2 bán cầu), gây mưa lớn." },
+            { id: 12, category: "Khí quyển", term: "Nhân tố gây mưa", definition: "Khí áp thấp, Frông, Dải hội tụ, Gió mang hơi ẩm, Dòng biển nóng, Địa hình đón gió." },
+            // Bài 12
+            { id: 13, category: "Thủy quyển", term: "Thủy quyển", definition: "Lớp nước trên Trái Đất (Biển, đại dương, sông hồ, băng tuyết, nước ngầm, hơi nước trong khí quyển)." },
+            { id: 14, category: "Thủy quyển", term: "Hồ kiến tạo", definition: "Hồ hình thành tại các vùng sụt lún, đứt gãy của vỏ Trái Đất (Ví dụ: Biển Hồ, hồ Bai-can)." },
+            { id: 15, category: "Thủy quyển", term: "Hồ núi lửa", definition: "Hồ hình thành trên miệng núi lửa đã tắt (Ví dụ: Hồ Tơ Nưng/Biển Hồ Pleiku)." },
+            { id: 16, category: "Thủy quyển", term: "Chế độ nước sông", definition: "Sự thay đổi lưu lượng nước sông theo thời gian (mùa lũ, mùa cạn), phụ thuộc vào nguồn cung cấp nước." },
+            { id: 17, category: "Thủy quyển", term: "Nước ngầm", definition: "Nước nằm trong các tầng chứa nước dưới đất, phụ thuộc vào nguồn cung cấp, địa hình và cấu tạo đất đá." },
+            // Bài 13
+            { id: 18, category: "Thủy quyển", term: "Sóng biển", definition: "Dao động tại chỗ của nước biển theo chiều thẳng đứng. Nguyên nhân chủ yếu do gió." },
+            { id: 19, category: "Thủy quyển", term: "Triều cường", definition: "Dao động thủy triều lớn nhất khi Mặt Trăng, Trái Đất, Mặt Trời thẳng hàng (lực hút cộng hưởng)." },
+            { id: 20, category: "Thủy quyển", term: "Triều kém", definition: "Dao động thủy triều nhỏ nhất khi Mặt Trăng, Trái Đất, Mặt Trời tạo thành góc vuông." },
+            { id: 21, category: "Thủy quyển", term: "Dòng biển (Hải lưu)", definition: "Các dòng nước chảy trong biển và đại dương. Dòng biển nóng (từ xích đạo về cực), Dòng biển lạnh (từ cực về xích đạo)." },
+            { id: 22, category: "Thủy quyển", term: "Độ muối", definition: "Lượng muối hòa tan trong nước biển. Cao nhất ở chí tuyến (ít mưa, bốc hơi mạnh), thấp ở xích đạo và ôn đới." },
+            // Bài 14
+            { id: 23, category: "Đất", term: "Đất (Thổ nhưỡng)", definition: "Lớp vật chất tơi xốp ở bề mặt lục địa, được đặc trưng bởi độ phì." },
+            { id: 24, category: "Đất", term: "Độ phì", definition: "Khả năng cung cấp nước, nhiệt, khí và chất dinh dưỡng cần thiết cho thực vật sinh trưởng." },
+            { id: 25, category: "Đất", term: "Đá mẹ", definition: "Nhân tố cung cấp vật chất vô cơ, quyết định thành phần khoáng vật và tính chất lí/hóa của đất." },
+            { id: 26, category: "Đất", term: "Vỏ phong hóa", definition: "Lớp sản phẩm vụn thô ở phần trên cùng vỏ Trái Đất, là kết quả phá hủy đá gốc." },
+            { id: 27, category: "Đất", term: "Vai trò Khí hậu (với đất)", definition: "Nhiệt và ẩm phá hủy đá (phong hóa) và ảnh hưởng đến sự phân giải chất hữu cơ của sinh vật." },
+            // Bài 15
+            { id: 28, category: "Sinh quyển", term: "Sinh quyển", definition: "Quyển của lớp vỏ Trái Đất mà thành phần, cấu trúc và năng lượng chủ yếu do sinh vật chi phối." },
+            { id: 29, category: "Sinh quyển", term: "Thảm thực vật", definition: "Toàn bộ các loài thực vật cùng sinh sống trên một vùng rộng lớn." },
+            { id: 30, category: "Sinh quyển", term: "Quy luật địa đới", definition: "Sự thay đổi có quy luật của các thành phần địa lí theo vĩ độ (từ Xích đạo về hai cực)." }
+        ];
+
+        const questionBank = [
+            {
+                id: 1,
+                question: "Nhiệt độ trung bình năm giảm dần từ Xích đạo về hai cực chủ yếu do:",
+                options: ["Thời gian chiếu sáng giảm dần.", "Góc chiếu của tia sáng Mặt Trời giảm dần.", "Ảnh hưởng của dòng biển lạnh.", "Địa hình ngày càng cao."],
+                correct: 1,
+                explanation: "Góc chiếu sáng của Mặt Trời giảm dần từ xích đạo về cực làm lượng nhiệt nhận được giảm theo."
+            },
+            {
+                id: 2,
+                question: "Đặc điểm nào sau đây KHÔNG phải của Gió Tây ôn đới?",
+                options: ["Thổi từ áp cao cận chí tuyến về áp thấp ôn đới.", "Hướng chủ đạo là hướng Tây.", "Tính chất khô, ít gây mưa.", "Thổi quanh năm."],
+                correct: 2,
+                explanation: "Gió Tây ôn đới có tính chất ẩm và gây mưa nhiều, không phải khô."
+            },
+            {
+                id: 3,
+                question: "Nguyên nhân chủ yếu hình thành sóng biển là do:",
+                options: ["Sức hút của Mặt Trăng.", "Động đất núi lửa.", "Gió.", "Sự chênh lệch nhiệt độ."],
+                correct: 2,
+                explanation: "Gió là nguyên nhân chủ yếu tạo ra sóng biển (dao động tại chỗ)."
+            },
+            {
+                id: 4,
+                question: "Thủy triều lớn nhất (Triều cường) xảy ra khi:",
+                options: ["Mặt Trăng, Trái Đất, Mặt Trời tạo thành góc vuông.", "Mặt Trăng, Trái Đất, Mặt Trời thẳng hàng.", "Trái Đất ở gần Mặt Trời nhất.", "Trái Đất ở xa Mặt Trăng nhất."],
+                correct: 1,
+                explanation: "Khi 3 thiên thể thẳng hàng, lực hút cộng hưởng tạo ra sức hút lớn nhất."
+            },
+            {
+                id: 5,
+                question: "Nhân tố nào đóng vai trò chủ đạo trong việc phá hủy đá gốc (phong hóa) để hình thành đất?",
+                options: ["Sinh vật.", "Khí hậu (Nhiệt và Ẩm).", "Địa hình.", "Thời gian."],
+                correct: 1,
+                explanation: "Nhiệt độ và lượng mưa (Khí hậu) tác động trực tiếp làm phá hủy đá gốc về mặt vật lý và hóa học."
+            },
+            {
+                id: 6,
+                question: "Khu vực nào sau đây trên Trái Đất thường có lượng mưa lớn nhất?",
+                options: ["Vùng cực.", "Vùng chí tuyến.", "Vùng ôn đới.", "Vùng xích đạo."],
+                correct: 3,
+                explanation: "Vùng xích đạo có khí áp thấp, nhiệt độ cao, bốc hơi mạnh và dòng thăng hoạt động mạnh nên mưa nhiều nhất."
+            },
+            {
+                id: 7,
+                question: "Tại sao các vùng chí tuyến ven bờ tây lục địa thường có hoang mạc?",
+                options: ["Do ảnh hưởng của dòng biển lạnh.", "Do gió Mậu dịch thổi từ lục địa ra.", "Do áp cao cận chí tuyến ngự trị.", "Cả 3 nguyên nhân trên."],
+                correct: 3,
+                explanation: "Hoang mạc chí tuyến hình thành do tổng hợp của áp cao (khô), dòng biển lạnh (không bốc hơi) và gió thổi ra biển."
+            },
+            {
+                id: 8,
+                question: "Sông ngòi ở vùng khí hậu nhiệt đới gió mùa thường có chế độ nước:",
+                options: ["Điều hòa quanh năm.", "Phân mùa lũ - cạn rõ rệt.", "Đóng băng vào mùa đông.", "Chủ yếu do băng tuyết tan cung cấp."],
+                correct: 1,
+                explanation: "Vùng nhiệt đới gió mùa có mùa mưa và mùa khô sâu sắc, nên sông ngòi cũng có mùa lũ và mùa cạn tương ứng."
+            },
+            {
+                id: 9,
+                question: "Hồ Ba Bể (Việt Nam) và Hồ kiến tạo Đông Phi thuộc loại hồ nào?",
+                options: ["Hồ núi lửa.", "Hồ băng hà.", "Hồ kiến tạo.", "Hồ móng ngựa."],
+                correct: 2,
+                explanation: "Các hồ này hình thành tại các vùng sụt lún, đứt gãy của vỏ Trái Đất (nguồn gốc kiến tạo)."
+            },
+            {
+                id: 10,
+                question: "Nhân tố quyết định sự phân bố của các đới thiên nhiên (sinh vật) trên Trái Đất là:",
+                options: ["Đất đai.", "Địa hình.", "Khí hậu.", "Nguồn nước."],
+                correct: 2,
+                explanation: "Khí hậu (chế độ nhiệt, ẩm) quy định sự phân bố của thảm thực vật và đất, từ đó hình thành các đới thiên nhiên."
+            }
+        ];
+
+        const mindmapData = {
+            id: 'root',
+            label: 'ĐỊA LÍ 10 (Bài 8-15)',
+            children: [
+                {
+                    id: 'khi-quyen',
+                    label: 'Khí Quyển (Bài 8-11)',
+                    children: [
+                        { id: 'nhiet-do', label: 'Nhiệt độ: Vĩ độ, Lục địa/Đại dương, Địa hình' },
+                        { 
+                            id: 'khi-ap', 
+                            label: 'Khí áp & Gió',
+                            children: [
+                                { id: 'nguyen-nhan', label: 'Nguyên nhân: Nhiệt lực & Động lực' },
+                                { id: 'cac-loai-gio', label: 'Gió chính: Tây ôn đới, Mậu dịch, Mùa' }
+                            ]
+                        },
+                        { id: 'mua', label: 'Mưa: Nhân tố ảnh hưởng, Phân bố' }
+                    ]
+                },
+                {
+                    id: 'thuy-quyen',
+                    label: 'Thủy Quyển (Bài 12-13)',
+                    children: [
+                        { id: 'luc-dia', label: 'Nước lục địa: Sông, Hồ, Băng tuyết' },
+                        { id: 'bien', label: 'Biển: Sóng, Thủy triều, Dòng biển' }
+                    ]
+                },
+                {
+                    id: 'sinh-quyen',
+                    label: 'Đất & Sinh Quyển (Bài 14-15)',
+                    children: [
+                        { id: 'dat', label: 'Đất: Đá mẹ, Khí hậu, Sinh vật...' },
+                        { id: 'sinh-vat', label: 'Sinh quyển: Giới hạn, Nhân tố ảnh hưởng' }
+                    ]
+                }
+            ]
+        };
+
+        // --- UTILS ---
+        const shuffleArray = (array) => {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        };
+
+        // --- COMPONENTS ---
+
+        // 1. FLASHCARD WITH SPACED REPETITION
+        const FlashcardMode = () => {
+            const [cards, setCards] = useState(fullFlashcardsData);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [cardStatus, setCardStatus] = useState({});
+
+            const handleStatus = (status) => {
+                const currentCardId = cards[currentIndex].id;
+                setCardStatus(prev => ({
+                    ...prev,
+                    [currentCardId]: status
+                }));
+                setTimeout(() => {
+                    setIsFlipped(false);
+                    setTimeout(() => {
+                        setCurrentIndex((prev) => (prev + 1) % cards.length);
+                    }, 200);
+                }, 300);
+            };
+
+            const handleShuffle = () => {
+                setIsFlipped(false);
+                setTimeout(() => {
+                    const shuffled = shuffleArray([...fullFlashcardsData]);
+                    setCards(shuffled);
+                    setCurrentIndex(0);
+                }, 200);
+            };
+
+            const currentCard = cards[currentIndex];
+            const status = cardStatus[currentCard.id] || 0;
+            const total = fullFlashcardsData.length;
+            const remembered = Object.values(cardStatus).filter(s => s === 1).length;
+            const forgot = Object.values(cardStatus).filter(s => s === 2).length;
+            const newCards = total - remembered - forgot;
+
+            return (
+                <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto p-4">
+                    <div className="w-full flex justify-between items-center mb-4 text-gray-600">
+                        <span className="font-semibold text-blue-600 flex items-center gap-2">
+                            <Layers size={18} /> {currentCard.category}
+                        </span>
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md">Đã thuộc: {remembered}</span>
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-md">Cần ôn: {forgot}</span>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-80 perspective-1000 cursor-pointer group mb-6" onClick={() => setIsFlipped(!isFlipped)}>
+                        <div className={`relative w-full h-full duration-500 transform-style-3d transition-transform ${isFlipped ? 'rotate-y-180' : ''}`}>
+                            <div className={`absolute w-full h-full bg-white rounded-2xl shadow-xl border-2 p-8 flex flex-col items-center justify-center backface-hidden ${status === 1 ? 'border-green-200' : status === 2 ? 'border-red-200' : 'border-blue-100'}`}>
+                                <h3 className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">Thuật ngữ</h3>
+                                <h2 className="text-3xl font-bold text-gray-800 text-center">{currentCard.term}</h2>
+                                {status !== 0 && (
+                                    <div className={`absolute top-4 right-4 px-2 py-1 text-xs rounded-full ${status === 1 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {status === 1 ? 'Đã nhớ' : 'Chưa nhớ'}
+                                    </div>
+                                )}
+                                <div className="absolute bottom-4 text-blue-400 text-sm animate-bounce">Chạm để lật</div>
+                            </div>
+                            <div className="absolute w-full h-full bg-blue-600 rounded-2xl shadow-xl p-8 flex flex-col items-center justify-center rotate-y-180 backface-hidden">
+                                <h3 className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-4">Định nghĩa</h3>
+                                <p className="text-xl text-white text-center leading-relaxed font-medium">{currentCard.definition}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col w-full max-w-md gap-3">
+                        <div className="flex gap-4">
+                            <button onClick={(e) => { e.stopPropagation(); handleStatus(2); }} className="flex-1 py-3 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 transition font-medium flex items-center justify-center gap-2 border border-red-200">
+                                <ThumbsDown size={20} /> Chưa thuộc
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleStatus(1); }} className="flex-1 py-3 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 transition font-medium flex items-center justify-center gap-2 border border-green-200">
+                                <ThumbsUp size={20} /> Đã thuộc
+                            </button>
+                        </div>
+                        <button onClick={handleShuffle} className="w-full py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition font-medium flex items-center justify-center gap-2 text-sm">
+                            <Shuffle size={16} /> Xáo trộn thẻ
+                        </button>
+                    </div>
+
+                    <div className="w-full mt-8 bg-gray-200 rounded-full h-2.5 overflow-hidden flex">
+                        <div className="bg-green-500 h-2.5" style={{ width: `${(remembered / total) * 100}%` }}></div>
+                        <div className="bg-red-500 h-2.5" style={{ width: `${(forgot / total) * 100}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1 w-full">
+                        <span>Tiến độ: {Math.round(((remembered + forgot) / total) * 100)}%</span>
+                        <span>Còn lại: {newCards}</span>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. COLLAPSIBLE MINDMAP
+        const MindMapNode = ({ node, level = 0 }) => {
+            const [isExpanded, setIsExpanded] = useState(true);
+            const hasChildren = node.children && node.children.length > 0;
+
+            return (
+                <div className={`flex flex-col items-center ${level === 0 ? 'w-full' : ''}`}>
+                    <div 
+                        className={`
+                            relative px-4 py-3 rounded-lg border-2 shadow-sm text-center font-medium transition-all 
+                            ${hasChildren ? 'cursor-pointer hover:shadow-md' : 'cursor-default'}
+                            ${level === 0 ? 'bg-blue-600 text-white border-blue-600 text-xl mb-8 z-10' : ''}
+                            ${level === 1 ? 'bg-white text-blue-800 border-blue-200 text-lg mb-4 min-w-[180px] z-10' : ''}
+                            ${level >= 2 ? 'bg-gray-50 text-gray-700 border-gray-200 text-sm mb-2 min-w-[150px] z-10' : ''}
+                        `}
+                        onClick={() => hasChildren && setIsExpanded(!isExpanded)}
+                    >
+                        {node.label}
+                        {hasChildren && (
+                            <div className={`absolute -right-3 -top-3 w-6 h-6 rounded-full flex items-center justify-center text-xs border bg-white shadow-sm transition-colors ${isExpanded ? 'text-gray-500 border-gray-300' : 'text-blue-600 border-blue-400 bg-blue-50'}`}>
+                                {isExpanded ? <Minus size={12} /> : <Plus size={12} />}
+                            </div>
+                        )}
+                        {level > 0 && <div className="absolute -top-4 left-1/2 w-0.5 h-4 bg-gray-300 -translate-x-1/2 -z-10"></div>}
+                    </div>
+                    
+                    {hasChildren && isExpanded && (
+                        <div className={`flex flex-wrap justify-center gap-x-8 gap-y-4 animate-fade-in-down ${level === 0 ? 'w-full' : ''}`}>
+                            {level === 0 && node.children.length > 1 && (
+                                <div className="w-[calc(100%-40px)] h-0.5 bg-gray-300 absolute mt-[-20px] translate-y-8 z-0"></div>
+                            )}
+                            {node.children.map((child) => (
+                                <div key={child.id} className="flex flex-col items-center relative">
+                                    {level === 0 && <div className="h-8 w-0.5 bg-gray-300 absolute -top-8 z-0"></div>}
+                                    <MindMapNode node={child} level={level + 1} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const MindMapMode = () => {
+            return (
+                <div className="w-full overflow-x-auto p-8 bg-slate-50 rounded-xl border border-slate-200 min-h-[500px] flex justify-center items-start">
+                    <MindMapNode node={mindmapData} />
+                </div>
+            );
+        };
+
+        // 3. SIMULATIONS
+        const CloudRainIcon = ({ className }) => (
+            <svg className={className} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                <path d="M16 14v6"></path>
+                <path d="M8 14v6"></path>
+                <path d="M12 16v6"></path>
+            </svg>
+        );
+
+        const SimulationMode = () => {
+            const [tidePhase, setTidePhase] = useState(0); 
+            const [isHoveringTide, setIsHoveringTide] = useState(false);
+
+            useEffect(() => {
+                let interval;
+                if (isHoveringTide) {
+                    interval = setInterval(() => {
+                        setTidePhase(p => (p + 1) % 360);
+                    }, 30);
+                }
+                return () => clearInterval(interval);
+            }, [isHoveringTide]);
+
+            const moonRadius = 90;
+            const moonX = Math.cos(tidePhase * Math.PI / 180) * moonRadius;
+            const moonY = Math.sin(tidePhase * Math.PI / 180) * moonRadius;
+            const bulgeX = 1 + Math.abs(Math.cos(tidePhase * Math.PI / 180)) * 0.4;
+            const bulgeY = 1 + Math.abs(Math.sin(tidePhase * Math.PI / 180)) * 0.1;
+
+            return (
+                <div className="max-w-4xl mx-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Visual 1: Gió */}
+                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 group cursor-pointer hover:border-blue-300 transition">
+                        <div className="flex items-center gap-2 mb-4 text-blue-700">
+                            <Wind size={24} />
+                            <h3 className="text-lg font-bold">Cơ chế Gió (Di chuột để xem)</h3>
+                        </div>
+                        <div className="relative h-48 bg-gradient-to-b from-sky-50 to-white rounded-xl overflow-hidden border border-gray-200">
+                            <div className="absolute left-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-lg bg-blue-100 flex flex-col items-center justify-center border-2 border-blue-400 z-10 shadow-md">
+                                <span className="font-black text-blue-800 text-2xl">H</span>
+                                <span className="text-[10px] text-blue-600 font-bold">ÁP CAO</span>
+                            </div>
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-red-100 flex flex-col items-center justify-center border-2 border-red-400 z-10 shadow-md">
+                                <span className="font-black text-red-800 text-2xl">L</span>
+                                <span className="text-[10px] text-red-600 font-bold">ÁP THẤP</span>
+                            </div>
+                            <div className="absolute top-1/2 left-28 right-28 h-12 -translate-y-1/2 flex items-center justify-center">
+                                <div className="w-full h-full flex justify-between items-center relative overflow-hidden">
+                                    {[...Array(8)].map((_, i) => (
+                                        <div key={i} className="absolute top-1/2 -translate-y-1/2 animate-flow-hover text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" style={{ left: '-20px', animationDelay: `${i * 0.3}s` }}>
+                                            <ArrowRight size={24} strokeWidth={3} />
+                                        </div>
+                                    ))}
+                                    <div className="text-gray-400 text-sm absolute w-full text-center group-hover:opacity-0 transition-opacity">
+                                        Di chuột vào để chạy
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Visual 2: Thủy triều */}
+                    <div 
+                        className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 cursor-pointer hover:border-indigo-300 transition"
+                        onMouseEnter={() => setIsHoveringTide(true)}
+                        onMouseLeave={() => setIsHoveringTide(false)}
+                    >
+                        <div className="flex items-center gap-2 mb-4 text-indigo-700">
+                            <Waves size={24} />
+                            <h3 className="text-lg font-bold">Thủy triều (Di chuột để xem)</h3>
+                        </div>
+                        <div className="relative h-48 bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center">
+                            {[...Array(20)].map((_, i) => (
+                                <div key={i} className="absolute bg-white rounded-full w-0.5 h-0.5" style={{ top: `${Math.random()*100}%`, left: `${Math.random()*100}%`, opacity: Math.random() }}></div>
+                            ))}
+                            <div className="relative z-10 flex items-center justify-center">
+                                <div className="absolute bg-blue-500/40 rounded-full transition-transform duration-75 ease-linear border border-blue-400/30" style={{ width: '60px', height: '60px', transform: `scale(${bulgeX}, ${bulgeY})` }}></div>
+                                <div className="w-10 h-10 rounded-full bg-blue-600 shadow-inner z-20 flex items-center justify-center text-[8px] text-white font-bold border border-blue-400">Đất</div>
+                            </div>
+                            <div className="absolute z-20 transition-all duration-75 ease-linear" style={{ transform: `translate(${moonX}px, ${moonY}px)` }}>
+                                <div className="w-6 h-6 rounded-full bg-gray-300 shadow-[0_0_10px_rgba(255,255,255,0.4)] flex items-center justify-center text-[6px] font-bold text-gray-800">Trăng</div>
+                            </div>
+                            {!isHoveringTide && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white text-sm font-medium backdrop-blur-[1px]">Di chuột vào để chạy</div>}
+                        </div>
+                    </div>
+
+                    {/* Visual 3: Hiệu ứng Phơn */}
+                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 md:col-span-2 group cursor-pointer hover:border-orange-300 transition">
+                        <div className="flex items-center gap-2 mb-4 text-orange-700">
+                            <Mountain size={24} />
+                            <h3 className="text-lg font-bold">Hiệu ứng Phơn (Di chuột để xem)</h3>
+                        </div>
+                        <div className="relative h-64 bg-sky-50 rounded-xl overflow-hidden">
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-56 bg-stone-600 clip-path-triangle z-10"></div>
+                            
+                            <div className="absolute left-16 bottom-16 flex flex-col items-center z-20 opacity-30 group-hover:opacity-100 transition-opacity duration-500">
+                                <div className="flex flex-col gap-1 mb-2">
+                                    <CloudRainIcon className="text-blue-500 animate-bounce" />
+                                </div>
+                                <div className="bg-white/90 p-2 rounded-lg shadow-sm border border-blue-100 text-center">
+                                    <span className="block text-xs font-bold text-blue-600">Sườn đón gió</span>
+                                    <span className="block text-[10px] text-gray-500">Mưa ẩm</span>
+                                </div>
+                                <div className="mt-2 text-blue-500 rotate-[-45deg] animate-pulse"><ArrowRight size={32} strokeWidth={3}/></div>
+                            </div>
+
+                            <div className="absolute right-16 bottom-16 flex flex-col items-center z-20 opacity-30 group-hover:opacity-100 transition-opacity duration-500 delay-300">
+                                <div className="mb-4">
+                                    <Thermometer className="text-red-500 animate-pulse h-8 w-8" />
+                                </div>
+                                <div className="bg-white/90 p-2 rounded-lg shadow-sm border border-red-100 text-center">
+                                    <span className="block text-xs font-bold text-red-600">Sườn khuất gió</span>
+                                    <span className="block text-[10px] text-gray-500">Khô Nóng</span>
+                                </div>
+                                <div className="mt-2 text-red-500 rotate-[45deg] animate-pulse"><ArrowRight size={32} strokeWidth={3}/></div>
+                            </div>
+                            
+                            <div className="absolute top-4 left-0 w-full text-center text-sm font-medium text-gray-600 bg-white/50 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Gió vượt núi: Mất ẩm <span className="font-bold text-red-500">→</span> Nhiệt độ tăng nhanh.
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 group-hover:hidden">Di chuột vào để xem hiệu ứng</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. QUIZ
+        const QuizMode = () => {
+            const [currentQuestions, setCurrentQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [isCorrect, setIsCorrect] = useState(null);
+            const [score, setScore] = useState(0);
+            const [showResult, setShowResult] = useState(false);
+
+            const startNewQuiz = () => {
+                const randomQuestions = shuffleArray(questionBank).slice(0, 5);
+                setCurrentQuestions(randomQuestions);
+                setCurrentQuestionIndex(0);
+                setSelectedOption(null);
+                setIsCorrect(null);
+                setScore(0);
+                setShowResult(false);
+            };
+
+            useEffect(() => { startNewQuiz(); }, []);
+
+            const handleOptionClick = (index) => {
+                if (selectedOption !== null) return;
+                setSelectedOption(index);
+                const correct = index === currentQuestions[currentQuestionIndex].correct;
+                setIsCorrect(correct);
+                if (correct) setScore(score + 1);
+            };
+
+            const nextQuestion = () => {
+                if (currentQuestionIndex < currentQuestions.length - 1) {
+                    setCurrentQuestionIndex(currentQuestionIndex + 1);
+                    setSelectedOption(null);
+                    setIsCorrect(null);
+                } else {
+                    setShowResult(true);
+                }
+            };
+
+            if (currentQuestions.length === 0) return <div>Đang tải câu hỏi...</div>;
+
+            if (showResult) {
+                return (
+                    <div className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl shadow-lg max-w-lg mx-auto mt-10">
+                        <Brain size={64} className="text-blue-600 mb-4" />
+                        <h2 className="text-2xl font-bold mb-2">Hoàn thành!</h2>
+                        <p className="text-lg text-gray-600 mb-6">Đúng <span className="font-bold text-blue-600">{score}/{currentQuestions.length}</span> câu.</p>
+                        <button onClick={startNewQuiz} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">
+                            <RefreshCw size={20} /> Làm bộ đề mới
+                        </button>
+                    </div>
+                );
+            }
+
+            const question = currentQuestions[currentQuestionIndex];
+
+            return (
+                <div className="max-w-2xl mx-auto p-4">
+                    <div className="mb-6 flex justify-between text-sm font-medium text-gray-500">
+                        <span>Câu hỏi {currentQuestionIndex + 1}/{currentQuestions.length}</span>
+                        <span>Điểm: {score}</span>
+                    </div>
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold text-gray-800 leading-snug mb-6">{question.question}</h3>
+                        <div className="space-y-3">
+                            {question.options.map((option, index) => {
+                                let style = "bg-white border-2 border-gray-200 hover:border-blue-300";
+                                if (selectedOption !== null) {
+                                    if (index === question.correct) style = "bg-green-100 border-2 border-green-500 text-green-800";
+                                    else if (index === selectedOption) style = "bg-red-100 border-2 border-red-500 text-red-800";
+                                    else style = "bg-gray-100 border-2 border-gray-200 text-gray-400";
+                                }
+                                return (
+                                    <button key={index} onClick={() => handleOptionClick(index)} disabled={selectedOption !== null} className={`w-full p-4 rounded-xl text-left transition-all duration-200 flex justify-between items-center ${style}`}>
+                                        <span>{option}</span>
+                                        {selectedOption !== null && index === question.correct && <Check size={20} className="text-green-600" />}
+                                        {selectedOption !== null && index === selectedOption && index !== question.correct && <X size={20} className="text-red-600" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    {selectedOption !== null && (
+                        <div className="animate-fade-in-up">
+                            <div className={`p-4 rounded-lg mb-6 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                <div className="flex items-start gap-3">
+                                    <Info className="flex-shrink-0 mt-1" size={18} />
+                                    <p><strong>Giải thích:</strong> {question.explanation}</p>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <button onClick={nextQuestion} className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold shadow-lg transition">{currentQuestionIndex === currentQuestions.length - 1 ? "Xem kết quả" : "Câu tiếp theo"}</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- MAIN APP ---
+        const GeoMindApp = () => {
+            const [activeTab, setActiveTab] = useState('flashcards');
+
+            return (
+                <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+                    <header className="bg-white shadow-sm sticky top-0 z-50">
+                        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-blue-600 text-white p-2 rounded-lg">
+                                    <Zap size={24} />
+                                </div>
+                                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                                    GeoMind 10
+                                </h1>
+                            </div>
+                            <nav className="flex flex-wrap justify-center gap-2 bg-gray-100 p-1.5 rounded-xl">
+                                {[
+                                    { id: 'flashcards', label: 'Ghi nhớ', icon: BookOpen },
+                                    { id: 'quiz', label: 'Trắc nghiệm', icon: Brain },
+                                    { id: 'mindmap', label: 'Sơ đồ tư duy', icon: Share2 },
+                                    { id: 'simulation', label: 'Mô phỏng', icon: Droplets },
+                                ].map((tab) => (
+                                    <button 
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        <tab.icon size={16} /> <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto p-4 mt-6 pb-20">
+                        <div className="animate-fade-in">
+                            {activeTab === 'flashcards' && (
+                                <div className="text-center">
+                                    <h2 className="text-2xl font-bold mb-2">Thẻ ghi nhớ thông minh</h2>
+                                    <p className="text-gray-500 mb-8">Đánh giá mức độ thuộc bài để tối ưu hóa ôn tập.</p>
+                                    <FlashcardMode />
+                                </div>
+                            )}
+
+                            {activeTab === 'quiz' && (
+                                <div className="text-center">
+                                    <h2 className="text-2xl font-bold mb-2">Kiểm tra kiến thức</h2>
+                                    <p className="text-gray-500 mb-8">Thử sức với bộ câu hỏi ngẫu nhiên từ ngân hàng.</p>
+                                    <div className="text-left"><QuizMode /></div>
+                                </div>
+                            )}
+
+                            {activeTab === 'mindmap' && (
+                                <div className="text-center">
+                                    <h2 className="text-2xl font-bold mb-2">Sơ đồ tư duy tương tác</h2>
+                                    <p className="text-gray-500 mb-8">Click vào các nhánh để mở rộng hoặc thu gọn nội dung.</p>
+                                    <MindMapMode />
+                                </div>
+                            )}
+
+                            {activeTab === 'simulation' && (
+                                <div className="text-center">
+                                    <h2 className="text-2xl font-bold mb-2">Mô phỏng trực quan</h2>
+                                    <p className="text-gray-500 mb-8">Di chuột vào hình để xem quá trình hoạt động.</p>
+                                    <div className="text-left"><SimulationMode /></div>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<GeoMindApp />);
+    </script>
+</body>
+</html>
